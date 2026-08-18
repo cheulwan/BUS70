@@ -1049,13 +1049,22 @@
   }
 
   function saveMasterSettings() {
+    // 문자열을 배열로 변환하고 양 끝 공백 제거 후 빈 문자열 필터링
     let dArr = document.getElementById('driverListInput').value.split(',').map(s => s.trim()).filter(Boolean);
     let bArr = document.getElementById('busListInput').value.split(',').map(s => s.trim()).filter(Boolean);
+
+    // 기사 명단 및 차량 목록을 한글/알파벳 등 로케일에 맞춰 오름차순 정렬
+    dArr.sort((a, b) => a.localeCompare(b, 'ko-KR', { sensitivity: 'base' }));
+    bArr.sort((a, b) => a.localeCompare(b, 'ko-KR', { numeric: true, sensitivity: 'base' }));
 
     localStorage.setItem('70_drivers', JSON.stringify(dArr));
     localStorage.setItem('70_buses', JSON.stringify(bArr));
 
-    alert("기초 데이터가 저장되었습니다. (기존 배차 및 운행 이력은 안전하게 보존됩니다.)");
+    // 정렬된 결과로 입력 창(textarea) 업데이트
+    document.getElementById('driverListInput').value = dArr.join(', ');
+    document.getElementById('busListInput').value = bArr.join(', ');
+
+    alert("기초 데이터가 오름차순으로 정렬되어 안전하게 저장되었습니다.");
   }
 </script>
 </body>
