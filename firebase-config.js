@@ -1,0 +1,9 @@
+window.BUS70_FIREBASE_CONFIG={
+  apiKey:"AIzaSyBUdYQE0ZMCWVhhkpyyN77iV7rHv9qrTPY",
+  authDomain:"bus70-a2aaa.firebaseapp.com",
+  projectId:"bus70-a2aaa",
+  storageBucket:"bus70-a2aaa.firebasestorage.app",
+  messagingSenderId:"202208277977",
+  appId:"1:202208277977:web:741702cbc371dcc0eb55c8"
+};
+window.BUS70_VAPID_KEY="G-8SWWR1MYCE";
