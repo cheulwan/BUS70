@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>70번 소신여객 - 실시간 관제 및 운행일지 시스템</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    :root { 
+      --board-bg: #1b3a2b; 
+      --card-bg: #1e293b; 
+      --accent: #38bdf8; 
+      --green: #22c55e; 
+      --warn: #ef4444; 
+      --yellow: #facc15; 
+      --orange: #f97316;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: white; margin: 0; padding: 8px; font-size: 15px; box-sizing: border-box; }
+    
+    .tab-container { display: flex; gap: 4px; margin-bottom: 10px; }
+    .tab { flex: 1; padding: 12px 2px; text-align: center; background: #334155; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; color: #94a3b8; }
+    .tab.active { background: var(--accent); color: black; }
+
+    .card { background: var(--card-bg); padding: 12px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #334155; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+
+    input, select, textarea { width: 100%; background: #0f172a; color: white; border: 1px solid #475569; padding: 8px; text-align: center; border-radius: 6px; box-sizing: border-box; font-size: 0.9rem; }
+    input.direct-input { border-color: var(--orange); background: #2d1800; color: #ffedd5; font-weight: bold; }
+    
+    button { cursor: pointer; padding: 12px; border-radius: 8px; border: none; font-weight: bold; width: 100%; margin-top: 6px; font-size: 0.95rem; }
+    .btn-save { background: var(--green); color: black; }
+    .btn-share { background: #fee500; color: black; font-size: 1rem; }
+    .btn-auto { background: #8b5cf6; color: white; }
+    .btn-orange { background: var(--orange); color: white; }
+    .btn-slate { background: #475569; color: white; }
+    .btn-print { background: #38bdf8; color: black; }
+    
+    .holiday-style { background: #facc15 !important; color: #dc2626 !important; font-weight: bold; }
+    .day-info { padding: 10px; border-radius: 6px; text-align: center; margin-top: 8px; font-size: 0.88rem; font-weight: bold; }
+
+    /* 모바일 배차판 레이아웃 */
+    .board-container { background: var(--board-bg); border: 3px solid #2d5a42; border-radius: 8px; padding: 8px 4px; width: 100%; box-sizing: border-box; overflow: hidden; }
+    .board-title-banner { background: #0f172a; border: 1px solid #38bdf8; border-radius: 4px; padding: 6px 10px; margin-bottom: 6px; text-align: center; font-weight: 900; font-size: 1.05rem; color: var(--yellow); }
+
+    .board-header { display: flex; align-items: center; gap: 2px; margin-bottom: 6px; }
+    .route-badge { background: #0284c7; color: white; font-size: 1.3rem; font-weight: 900; padding: 4px 8px; border-radius: 4px; border: 2px solid white; white-space: nowrap; }
+    .seq-header-list { display: flex; gap: 2px; width: 100%; }
+    
+    .seq-badge { flex: 1; background: #b91c1c; color: white; text-align: center; padding: 3px 0; font-weight: bold; border-radius: 2px; min-width: 0; border: 1px solid #ef4444; font-size: 0.75rem; }
+    .seq-badge.off-seq { background: #475569; border-color: #64748b; color: #cbd5e1; }
+    .seq-sub { font-size: 0.62rem; display: block; color: #fef08a; font-weight: normal; line-height: 1.1; }
+    .origin-tag { display: block; font-size: 0.6rem; font-weight: bold; padding: 1px 0; background: rgba(0,0,0,0.3); margin-bottom: 1px; }
+    .origin-songnae { color: #38bdf8; }
+    .origin-gogang { color: #facc15; }
+    
+    .dispatch-board-grid { display: flex; gap: 2px; align-items: stretch; }
+    .shift-tag-col { writing-mode: vertical-rl; text-orientation: upright; background: #f8fafc; color: #dc2626; font-weight: 900; font-size: 1.1rem; padding: 6px 2px; border-radius: 4px; letter-spacing: 2px; border: 2px solid #cbd5e1; width: 26px; text-align: center; flex-shrink: 0; }
+    .board-columns-wrapper { display: flex; gap: 2px; width: 100%; }
+    .board-column { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; align-items: center; }
+
+    .bus-card-plate { background: #0284c7; color: white; border: 1.5px solid #38bdf8; border-radius: 4px; width: 100%; padding: 6px 0; text-align: center; box-sizing: border-box; }
+    .bus-card-plate.changed { background: #d97706; border-color: #f59e0b; }
+    .bus-card-plate.off { background: #334155; border-color: #475569; color: #94a3b8; }
+
+    .driver-card-plate { background: #facc15; color: black; border: 1.5px solid #eab308; border-radius: 4px; width: 100%; padding: 10px 0; text-align: center; box-sizing: border-box; }
+    .driver-card-plate.white-bg { background: #ffffff; color: black; border-color: #cbd5e1; }
+    .driver-card-plate.changed { background: #dc2626; color: white; border-color: #f87171; }
+    .driver-card-plate.off { background: #1e293b; color: #64748b; border-color: #334155; }
+    
+    .bus-number-vertical { writing-mode: vertical-rl; text-orientation: upright; font-size: 1.05rem; font-weight: 900; letter-spacing: 1px; margin: 0 auto; line-height: 1; }
+    .driver-name-vertical { writing-mode: vertical-rl; text-orientation: upright; font-size: 1.25rem; font-weight: 900; letter-spacing: 2px; margin: 0 auto; line-height: 1; }
+
+    .tang-card { background: #0f172a; border: 1px solid #334155; padding: 8px; border-radius: 6px; margin-top: 6px; display: flex; justify-content: space-between; align-items: center; }
+    .tang-title { font-weight: bold; color: var(--accent); font-size: 0.95rem; }
+    .tang-time { font-size: 1rem; font-weight: bold; color: var(--yellow); }
+    .tang-status { font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; background: #334155; }
+    .tang-status.active { background: var(--green); color: black; font-weight: bold; }
+
+    /* 타임라인 및 일지 테이블 */
+    .timeline-item { border-left: 2px solid var(--accent); padding-left: 10px; margin-bottom: 12px; position: relative; }
+    .timeline-item::before { content:''; position: absolute; left: -6px; top: 0; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+    
+    /* 인쇄 전용 스타일 */
+    @media print {
+      body { background: white; color: black; font-size: 12pt; padding: 0; }
+      .no-print, .tab-container, button, input, select { display: none !important; }
+      .card { border: none; background: white; color: black; padding: 0; margin: 0; }
+      .print-area { display: block !important; }
+      table.print-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+      table.print-table th, table.print-table td { border: 1px solid #000; padding: 6px; text-align: center; color: black; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="tab-container no-print">
+  <div class="tab active" id="tabD" onclick="switchMode('drv')">🚌 기사관제</div>
+  <div class="tab" id="tabM" onclick="switchMode('mgr')">👨‍💼 배차관리 🔒</div>
+  <div class="tab" id="tabL" onclick="switchMode('leave')">🏥 병가/휴무 🔒</div>
+  <div class="tab" id="tabLOG" onclick="switchMode('log')">📊 운행일지 🔒</div>
+  <div class="tab" id="tabS" onclick="switchMode('setting')">⚙️ 설정 🔒</div>
+</div>
+
+<!-- 관리자 로그인 모달 -->
+<div id="adminLoginModal" class="no-print" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:999; justify-content:center; align-items:center;">
+  <div class="card" style="width:85%; max-width:320px; border:2px solid var(--accent); text-align:center;">
+    <div style="font-weight:bold; font-size:1.1rem; color:var(--accent); margin-bottom:12px;">🔒 관리자 인증</div>
+    <input type="text" id="adminIdInput" placeholder="관리자 ID" style="margin-bottom:8px;">
+    <input type="password" id="adminPwInput" placeholder="비밀번호" style="margin-bottom:12px;">
+    <button class="btn-save" onclick="checkAdminLogin()">로그인</button>
+    <button class="btn-slate" onclick="closeAdminModal()" style="margin-top:6px;">취소</button>
+  </div>
+</div>
+
+<!-- 1. 기사용 실시간 관제 및 개인 운행일지 -->
+<div id="drvSection">
+  <div class="card no-print" style="border:1px solid var(--accent);">
+    <div style="font-weight:bold; color:var(--accent); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+      <span>👤 승무기사 프로필 및 운행 접속</span>
+      <span id="voiceStatusTag" style="font-size:0.75rem; color:var(--green);">🔊 음성안내 준비됨</span>
+    </div>
+    
+    <div class="grid-3" style="margin-bottom:8px;">
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">기사명</label>
+        <input type="text" id="drvLoginName">
+      </div>
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">사원번호</label>
+        <input type="text" id="drvEmpNo">
+      </div>
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">차량번호</label>
+        <input type="text" id="drvBusNo">
+      </div>
+    </div>
+    <button class="btn-save" onclick="loginDriverAndStartVoice()">🚌 기사 접속 및 음성 알림 연동 시작</button>
+  </div>
+
+  <div class="card no-print" id="drvScheduleCard" style="display:none; border:1px solid var(--yellow);">
+    <div style="font-weight:bold; color:var(--yellow); font-size:1.05rem; margin-bottom:6px; display:flex; justify-content:space-between;">
+      <span id="drvScheduleTitle">오늘의 운행 스케줄</span>
+      <span id="drvTurnBadge" style="background:#0284c7; color:white; padding:2px 6px; border-radius:4px; font-size:0.8rem;"></span>
+    </div>
+    <div id="drvScheduleSubText" style="font-size:0.82rem; color:#cbd5e1; margin-bottom:10px;"></div>
+    <div style="font-weight:bold; font-size:0.88rem; color:var(--accent); margin-bottom:4px;">⏱️ 1탕~5탕 자동 스케줄 현황</div>
+    <div id="tangListContainer"></div>
+  </div>
+
+  <div class="card no-print" style="border:1px solid var(--green);">
+    <div style="font-weight:bold; color:var(--green); margin-bottom:8px;">📄 승무기사 개인 운행일지 조회 및 제출</div>
+    <div class="grid-3" style="margin-bottom:6px;">
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">조회 유형</label>
+        <select id="driverSearchType" onchange="toggleDriverSearchInput()">
+          <option value="daily">특정일</option>
+          <option value="monthly">월별</option>
+          <option value="yearly">연도별</option>
+        </select>
+      </div>
+      <div id="driverDateBox">
+        <label style="font-size:0.7rem; color:#94a3b8;">날짜 선택</label>
+        <input type="date" id="driverSearchDate">
+      </div>
+      <div id="driverMonthBox" style="display:none;">
+        <label style="font-size:0.7rem; color:#94a3b8;">월 선택</label>
+        <input type="month" id="driverSearchMonth">
+      </div>
+    </div>
+    <button class="btn-slate" onclick="searchPersonalDriverLogs()">🔍 내 운행일지 조회</button>
+    <button class="btn-print" onclick="printDriverPersonalLog()" style="margin-top:6px;">🖨️ 개인 운행일지 제출용 출력</button>
+  </div>
+
+  <div id="personalLogPrintArea" class="card" style="display:none; background:white; color:black;">
+    <div style="text-align:center; font-weight:bold; font-size:1.3rem; margin-bottom:10px; border-bottom:2px solid #000; padding-bottom:6px;">
+      승무기사 개인 운행일지 (제출용)
+    </div>
+    <div id="personalLogHeaderInfo" style="margin-bottom:8px; font-size:0.9rem;"></div>
+    <table class="print-table" style="width:100%; border-collapse:collapse; text-align:center;">
+      <thead>
+        <tr style="background:#f1f5f9;">
+          <th>운행일자</th>
+          <th>근무조</th>
+          <th>순차</th>
+          <th>운행차량</th>
+          <th>총 탕수</th>
+          <th>특이사항 (예비차/대타)</th>
+        </tr>
+      </thead>
+      <tbody id="personalLogTbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 2. 배차 관리 -->
+<div id="mgrSection" style="display:none;">
+  <div class="card no-print">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <div style="font-weight:bold; color:var(--accent);">📅 근무조 및 날짜 선택</div>
+      <button onclick="logoutAdmin()" style="width:auto; padding:4px 8px; margin:0; font-size:0.75rem; background:#475569;">🔒 관리자 로그아웃</button>
+    </div>
+    <div class="grid-2">
+      <div>
+        <label style="font-size:0.75rem; color:#94a3b8;">근무조</label>
+        <select id="shiftSel" onchange="renderDispatchTable()">
+          <option value="A">A조</option>
+          <option value="B" selected>B조</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:0.75rem; color:#94a3b8;">배차 날짜</label>
+        <input type="date" id="dispatchDate" onchange="onDateChanged()">
+      </div>
+    </div>
+    <div style="margin-top:8px; display:flex; align-items:center; gap:8px;">
+      <input type="checkbox" id="forceHoliday" onchange="onDateChanged()" style="width:18px; height:18px;">
+      <label for="forceHoliday" style="font-size:0.82rem; color:var(--yellow); cursor:pointer;"><b>대체공휴일/임시공휴일 적용 (토/휴일시간표)</b></label>
+    </div>
+    <div id="dateStyleBox" class="day-info" style="background: #334155; color: white;">날짜를 선택하세요</div>
+  </div>
+
+  <div class="card" id="printableArea" style="padding:6px;">
+    <div class="board-container" id="captureBoard">
+      <div class="board-title-banner" id="boardTitleText">📌 70번 현장 배차판</div>
+      <div class="board-header">
+        <div class="route-badge">70</div>
+        <div class="seq-header-list" id="boardHeaderList"></div>
+      </div>
+      <div class="dispatch-board-grid">
+        <div class="shift-tag-col" id="boardShiftTag">70번B조</div>
+        <div class="board-columns-wrapper" id="boardColumnsWrapper"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card no-print">
+    <button class="btn-share" onclick="shareAsPNGImage()">📲 배차판 이미지 저장 및 단톡방 전송</button>
+  </div>
+
+  <div class="card no-print">
+    <div style="font-weight:bold; color:var(--accent); margin-bottom:6px;">📝 순차별 배차 지정 및 예비차/대타 수정</div>
+    <button class="btn-auto" onclick="autoFillSchedule()">🔄 이전 배차 불러와서 2순차 회전 배치</button>
+    
+    <table style="margin-top:8px; width:100%; font-size:0.8rem;">
+      <thead>
+        <tr style="background:#334155;">
+          <th style="width:16%;">순차</th>
+          <th style="width:24%;">차량</th>
+          <th style="width:24%;">기사</th>
+          <th style="width:36%;">예비차/대타 수정</th>
+        </tr>
+      </thead>
+      <tbody id="dispatchBody"></tbody>
+    </table>
+
+    <button class="btn-save" onclick="saveDispatchSchedule(true)">💾 전체 배차표 확정 저장 (타임라인 연동)</button>
+  </div>
+</div>
+
+<!-- 3. 병가 및 휴무 관리 -->
+<div id="leaveSection" class="no-print" style="display:none;">
+  <div class="card">
+    <div style="font-weight:bold; color:var(--warn); margin-bottom:6px;">🏥 기사 병가 기간 설정</div>
+    <div style="margin-bottom:6px;">
+      <label style="font-size:0.75rem; color:#cbd5e1;">기사 선택</label>
+      <select id="sickDriverSelect"></select>
+    </div>
+    
+    <div class="grid-2">
+      <div>
+        <label style="font-size:0.75rem; color:#cbd5e1;">시작일</label>
+        <input type="date" id="sickStartDate">
+      </div>
+      <div>
+        <label style="font-size:0.75rem; color:#cbd5e1;">종료일</label>
+        <input type="date" id="sickEndDate">
+      </div>
+    </div>
+    <input type="text" id="sickReason" placeholder="병가 사유" style="margin-top:6px; text-align:left;">
+    <button class="btn-orange" onclick="addSickLeave()">🏥 병가 등록 저장</button>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:bold; color:var(--accent); margin-bottom:8px;">📋 등록된 병가 명단</div>
+    <div id="sickListContainer" style="font-size:0.8rem;">등록된 병가 내역이 없습니다.</div>
+  </div>
+</div>
+
+<!-- 4. 관리자 전체 운행일지 타임라인 -->
+<div id="logSection" style="display:none;">
+  <div class="card no-print">
+    <div style="font-weight:bold; color:var(--accent); margin-bottom:8px;">📊 관리자 전체 기사 운행일지 타임라인</div>
+    <div class="grid-2" style="margin-bottom:8px;">
+      <div>
+        <label style="font-size:0.75rem; color:#cbd5e1;">조회 날짜</label>
+        <input type="date" id="adminLogDate" onchange="renderAdminTimeline()">
+      </div>
+      <div>
+        <label style="font-size:0.75rem; color:#cbd5e1;">근무조 Filter</label>
+        <select id="adminLogShift" onchange="renderAdminTimeline()">
+          <option value="ALL">전체 보기</option>
+          <option value="A">A조</option>
+          <option value="B">B조</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-print" onclick="printAdminTimeline()">🖨️ 전체 운행일지 A4 인쇄 / PDF 저장</button>
+  </div>
+
+  <div class="card" id="adminTimelinePrintCard" style="background:#1e293b; color:white;">
+    <div style="font-weight:bold; font-size:1.1rem; color:var(--yellow); margin-bottom:10px; text-align:center;">
+      🚌 70번 전체 승무기사 실시간 운행 타임라인
+    </div>
+    <div id="adminTimelineContainer"></div>
+  </div>
+</div>
+
+<!-- 5. 기초 데이터 및 계정 설정 -->
+<div id="settingSection" class="no-print" style="display:none;">
+  <div class="card">
+    <div style="font-weight:bold; color:var(--green); margin-bottom:8px;">⚙️ 70번 기본 기사 및 차량 정보</div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:0.8rem; color:var(--accent);">👥 70번 고정 기사 명단 (쉼표 구분)</label>
+      <textarea id="driverListInput" rows="3" style="text-align:left;"></textarea>
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:0.8rem; color:var(--accent);">🚌 70번 고정 차량 및 예비차 목록 (쉼표 구분)</label>
+      <textarea id="busListInput" rows="2" style="text-align:left;"></textarea>
+    </div>
+    <button class="btn-save" onclick="saveMasterSettings()">💾 기초 데이터 안전 저장 (기존 기록 보존)</button>
+  </div>
+
+  <div class="card" style="border:1px solid var(--orange);">
+    <div style="font-weight:bold; color:var(--orange); margin-bottom:8px;">🔒 관리자 ID 및 비밀번호 변경</div>
+    <div class="grid-2" style="margin-bottom:6px;">
+      <input type="text" id="currAdminId" placeholder="현재 ID">
+      <input type="password" id="currAdminPw" placeholder="현재 PW">
+    </div>
+    <div class="grid-2">
+      <input type="text" id="newAdminId" placeholder="새 ID">
+      <input type="password" id="newAdminPw" placeholder="새 PW">
+    </div>
+    <button class="btn-orange" onclick="changeAdminCredentials()">🔒 계정 정보 변경 실행</button>
+  </div>
+</div>
+
+<script>
+  // 시간표 정보
+  const timeTableData = {
+    weekday: [
+      { turn: 1, text: "05:20", origin: "송내발" }, { turn: 2, text: "05:40", origin: "송내발" },
+      { turn: 3, text: "04:50", origin: "고강발" }, { turn: 4, text: "05:05", origin: "고강발" },
+      { turn: 5, text: "05:20", origin: "고강발" }, { turn: 6, text: "05:36", origin: "고강발" },
+      { turn: 7, text: "05:52", origin: "고강발" }, { turn: 8, text: "06:08", origin: "고강발" },
+      { turn: 9, text: "06:25", origin: "고강발" }, { turn: 10, text: "06:45", origin: "고강발" },
+      { turn: 11, text: "07:05", origin: "고강발" }
+    ],
+    holiday: [
+      { turn: 1, text: "05:20", origin: "송내발" }, { turn: 2, text: "05:40", origin: "송내발" },
+      { turn: 3, text: "04:50", origin: "고강발" }, { turn: 4, text: "05:15", origin: "고강발" },
+      { turn: 5, text: "05:40", origin: "고강발" }, { turn: 6, text: "06:05", origin: "고강발" },
+      { turn: 7, text: "06:30", origin: "고강발" }, { turn: 8, text: "06:55", origin: "고강발" },
+      { turn: 9, text: "운휴", origin: "-" }, { turn: 10, text: "운휴", origin: "-" }, { turn: 11, text: "운휴", origin: "-" }
+    ]
+  };
+
+  const defaultDrivers = ["박영기", "유재웅", "강호익", "박현우", "최일규", "김 호", "이기삼", "권경율", "박철완", "한성혁", "강호의", "천승준", "이재천"];
+  const defaultBuses = ["1608", "1609", "1610", "1622", "1506", "1507", "1504", "1508", "1499", "1503", "1505", "예비1601", "운휴/점검"];
+
+  let isAdminLoggedIn = false;
+  let pendingTab = null;
+  let audioCtx = null;
+  let myActiveTangSchedules = [];
+  let alertTimer = null;
+
+  const todayStr = new Date().toISOString().substring(0, 10);
+  document.getElementById('dispatchDate').value = todayStr;
+  document.getElementById('driverSearchDate').value = todayStr;
+  document.getElementById('adminLogDate').value = todayStr;
+
+  window.onload = function() {
+    loadLastDriverProfile();
+  };
+
+  // 날짜 변환 함수: 2026-08-17 -> 2026년 8월 17일(월)
+  function formatDateWithDay(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    const dayName = days[dateObj.getDay()];
+    return `${parts[0]}년 ${parseInt(parts[1])}월 ${parseInt(parts[2])}일(${dayName})`;
+  }
+
+  function loadLastDriverProfile() {
+    const lastProf = JSON.parse(localStorage.getItem('70_last_driver_profile')) || { name: '박철완', empNo: '1004', busNo: '1608' };
+    document.getElementById('drvLoginName').value = lastProf.name;
+    document.getElementById('drvEmpNo').value = lastProf.empNo;
+    document.getElementById('drvBusNo').value = lastProf.busNo;
+  }
+
+  function getAdminAccount() {
+    const savedAcc = localStorage.getItem('70_admin_account');
+    if(savedAcc) return JSON.parse(savedAcc);
+    return { id: 'admin', pw: '1234' };
+  }
+
+  function isHolidayMode() {
+    const dateInput = document.getElementById('dispatchDate').value;
+    if(!dateInput) return false;
+    const date = new Date(dateInput);
+    return (date.getDay() === 0 || date.getDay() === 6) || document.getElementById('forceHoliday').checked;
+  }
+
+  function getMasterData() {
+    let drivers = JSON.parse(localStorage.getItem('70_drivers')) || defaultDrivers;
+    let buses = JSON.parse(localStorage.getItem('70_buses')) || defaultBuses;
+    if (!drivers.includes("휴무")) drivers.push("휴무");
+    if (!drivers.includes("병가")) drivers.push("병가");
+    return { drivers, buses };
+  }
+
+  function getFormattedFileName() {
+    const date = document.getElementById('dispatchDate').value;
+    const shift = document.getElementById('shiftSel').value;
+    return `70번_배차판_${date}_${shift}조`;
+  }
+
+  function switchMode(m) {
+    if(m === 'mgr' || m === 'leave' || m === 'setting' || m === 'log') {
+      if(!isAdminLoggedIn) {
+        pendingTab = m;
+        document.getElementById('adminLoginModal').style.display = 'flex';
+        return;
+      }
+    }
+    activateTab(m);
+  }
+
+  function checkAdminLogin() {
+    const id = document.getElementById('adminIdInput').value.trim();
+    const pw = document.getElementById('adminPwInput').value.trim();
+    const currentAcc = getAdminAccount();
+
+    if(id === currentAcc.id && pw === currentAcc.pw) {
+      isAdminLoggedIn = true;
+      closeAdminModal();
+      alert("관리자 인증 완료!");
+      if(pendingTab) activateTab(pendingTab);
+    } else {
+      alert("아이디 또는 비밀번호가 올바르지 않습니다.");
+    }
+  }
+
+  function closeAdminModal() {
+    document.getElementById('adminLoginModal').style.display = 'none';
+  }
+
+  function logoutAdmin() {
+    isAdminLoggedIn = false;
+    alert("관리자 로그아웃 되었습니다.");
+    activateTab('drv');
+  }
+
+  function changeAdminCredentials() {
+    const currId = document.getElementById('currAdminId').value.trim();
+    const currPw = document.getElementById('currAdminPw').value.trim();
+    const newId = document.getElementById('newAdminId').value.trim();
+    const newPw = document.getElementById('newAdminPw').value.trim();
+
+    const currentAcc = getAdminAccount();
+
+    if(currId !== currentAcc.id || currPw !== currentAcc.pw) {
+      alert("현재 관리자 계정 정보가 틀립니다.");
+      return;
+    }
+
+    if(!newId || !newPw) {
+      alert("새 계정 정보를 입력하세요.");
+      return;
+    }
+
+    localStorage.setItem('70_admin_account', JSON.stringify({ id: newId, pw: newPw }));
+    alert(`관리자 계정이 변경되었습니다! (신규 ID: ${newId})`);
+  }
+
+  function activateTab(m) {
+    document.getElementById('mgrSection').style.display = m==='mgr'?'block':'none';
+    document.getElementById('drvSection').style.display = m==='drv'?'block':'none';
+    document.getElementById('leaveSection').style.display = m==='leave'?'block':'none';
+    document.getElementById('logSection').style.display = m==='log'?'block':'none';
+    document.getElementById('settingSection').style.display = m==='setting'?'block':'none';
+    
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    if(m==='mgr') { document.getElementById('tabM').classList.add('active'); renderDispatchTable(); }
+    if(m==='drv') { document.getElementById('tabD').classList.add('active'); }
+    if(m==='leave') { document.getElementById('tabL').classList.add('active'); loadLeaveTab(); }
+    if(m==='log') { document.getElementById('tabLOG').classList.add('active'); renderAdminTimeline(); }
+    if(m==='setting') { document.getElementById('tabS').classList.add('active'); loadSettingsInput(); }
+  }
+
+  function onDateChanged() {
+    checkDateStyle();
+    renderDispatchTable();
+  }
+
+  function checkDateStyle() {
+    const dateInput = document.getElementById('dispatchDate').value;
+    if(!dateInput) return;
+    const formattedDate = formatDateWithDay(dateInput);
+    const isHoliday = isHolidayMode();
+    const box = document.getElementById('dateStyleBox');
+    const shift = document.getElementById('shiftSel').value;
+
+    document.getElementById('boardTitleText').innerText = `📌 70번 현장 배차판 (${formattedDate} / ${shift}조)`;
+
+    if(isHoliday) {
+      box.className = "day-info holiday-style";
+      box.innerText = `📅 ${formattedDate} - [토/휴일 시간표 (1~8순차)]`;
+    } else {
+      box.className = "day-info";
+      box.style.background = "#334155"; box.style.color = "white";
+      box.innerText = `📅 ${formattedDate} - [평일 정상 시간표 (1~11순차)]`;
+    }
+  }
+
+  function renderDispatchTable() {
+    const { drivers, buses } = getMasterData();
+    const tbody = document.getElementById('dispatchBody');
+    const headerList = document.getElementById('boardHeaderList');
+    const shift = document.getElementById('shiftSel').value;
+    const isHoliday = isHolidayMode();
+    const currentTimes = isHoliday ? timeTableData.holiday : timeTableData.weekday;
+
+    document.getElementById('boardShiftTag').innerText = `70번${shift}조`;
+
+    headerList.innerHTML = '';
+    tbody.innerHTML = '';
+
+    for(let i = 1; i <= 11; i++) {
+      const timeObj = currentTimes.find(t => t.turn === i);
+      const ft = timeObj ? timeObj.text : "미정";
+      const origin = timeObj ? timeObj.origin : "-";
+      const isOffTurn = isHoliday && i >= 9;
+
+      const originClass = i <= 2 ? 'origin-songnae' : 'origin-gogang';
+
+      headerList.innerHTML += `
+        <div class="seq-badge ${isOffTurn ? 'off-seq' : ''}">
+          <span class="origin-tag ${originClass}">${origin}</span>
+          <span class="seq-sub">${ft}</span>
+          ${i}
+        </div>`;
+
+      if(isOffTurn) {
+        tbody.innerHTML += `
+          <tr style="background:#1e293b; color:#64748b;">
+            <td><b>${i}순차</b><br><span style="font-size:0.65rem; color:#94a3b8;">${ft}</span></td>
+            <td colspan="3" style="text-align:center; color:#ef4444; font-weight:bold;">[휴일 운휴 순차]</td>
+          </tr>`;
+      } else {
+        let busOpts = buses.map(b => `<option value="${b}">${b}</option>`).join('');
+        let drvOpts = drivers.map(d => `<option value="${d}">${d}</option>`).join('');
+
+        tbody.innerHTML += `
+          <tr>
+            <td><b>${i}순차</b><br><span style="font-size:0.65rem; color:#38bdf8;">${ft} (${origin})</span></td>
+            <td style="padding:2px;"><select id="sel_bus_${i}" onchange="updateBoardDisplay()">${busOpts}</select></td>
+            <td style="padding:2px;"><select id="sel_drv_${i}" onchange="updateBoardDisplay()">${drvOpts}</select></td>
+            <td style="padding:2px;">
+              <div style="display:flex; gap:2px;">
+                <input type="text" id="custom_bus_${i}" placeholder="예비차" class="direct-input" style="font-size:0.75rem; padding:4px;">
+                <input type="text" id="custom_drv_${i}" placeholder="대타" class="direct-input" style="font-size:0.75rem; padding:4px;">
+                <button onclick="applyDirectRowChange(${i})" style="width:auto; padding:4px 6px; margin:0; font-size:0.7rem; background:var(--orange); color:white;">수정</button>
+              </div>
+            </td>
+          </tr>`;
+      }
+    }
+
+    const date = document.getElementById('dispatchDate').value;
+    const historyKey = `70_history_${date}_${shift}`;
+    const saved = localStorage.getItem(historyKey) || localStorage.getItem('70_final_schedule');
+    
+    if(saved) {
+      const data = JSON.parse(saved);
+      if(data.schedule) {
+        data.schedule.forEach(s => {
+          const busEl = document.getElementById(`sel_bus_${s.turn}`);
+          const drvEl = document.getElementById(`sel_drv_${s.turn}`);
+          if(busEl) busEl.value = s.bus;
+          if(drvEl) drvEl.value = s.driver;
+        });
+      }
+    }
+
+    updateBoardDisplay();
+  }
+
+  function applyDirectRowChange(turn) {
+    const customBus = document.getElementById(`custom_bus_${turn}`).value.trim();
+    const customDrv = document.getElementById(`custom_drv_${turn}`).value.trim();
+    if(customBus) document.getElementById(`sel_bus_${turn}`).value = customBus;
+    if(customDrv) document.getElementById(`sel_drv_${turn}`).value = customDrv;
+    updateBoardDisplay();
+    saveDispatchSchedule(false);
+  }
+
+  function updateBoardDisplay() {
+    const wrapper = document.getElementById('boardColumnsWrapper');
+    wrapper.innerHTML = '';
+    const { drivers, buses } = getMasterData();
+    const isHoliday = isHolidayMode();
+
+    for(let i = 1; i <= 11; i++) {
+      const isOffTurn = isHoliday && i >= 9;
+
+      if(isOffTurn) {
+        wrapper.innerHTML += `
+          <div class="board-column">
+            <div class="bus-card-plate off"><div class="bus-number-vertical">운휴</div></div>
+            <div class="driver-card-plate off"><div class="driver-name-vertical">운휴</div></div>
+          </div>`;
+        continue;
+      }
+
+      const customBus = document.getElementById(`custom_bus_${i}`) ? document.getElementById(`custom_bus_${i}`).value.trim() : '';
+      const customDrv = document.getElementById(`custom_drv_${i}`) ? document.getElementById(`custom_drv_${i}`).value.trim() : '';
+      const selBus = document.getElementById(`sel_bus_${i}`) ? document.getElementById(`sel_bus_${i}`).value : '';
+      const selDrv = document.getElementById(`sel_drv_${i}`) ? document.getElementById(`sel_drv_${i}`).value : '';
+
+      const finalBus = customBus !== '' ? customBus : selBus;
+      const finalDrv = customDrv !== '' ? customDrv : selDrv;
+
+      const isYellowDriver = (i >= 1 && i <= 4) || i === 10 || i === 11;
+      const driverBgClass = isYellowDriver ? '' : 'white-bg';
+
+      const isBusChanged = customBus !== '' || !buses.includes(finalBus);
+      const isDriverChanged = customDrv !== '' || !drivers.includes(finalDrv);
+
+      wrapper.innerHTML += `
+        <div class="board-column">
+          <div class="bus-card-plate ${isBusChanged ? 'changed' : ''}">
+            <div class="bus-number-vertical">${finalBus || '---'}</div>
+          </div>
+          <div class="driver-card-plate ${isDriverChanged ? 'changed' : driverBgClass}">
+            <div class="driver-name-vertical">${finalDrv || '미배정'}</div>
+          </div>
+        </div>`;
+    }
+  }
+
+  function saveDispatchSchedule(showAlert = true) {
+    const shift = document.getElementById('shiftSel').value;
+    const date = document.getElementById('dispatchDate').value;
+    const isHoliday = isHolidayMode();
+
+    let schedule = [];
+    let assignedDrivers = [];
+    const maxSeq = isHoliday ? 8 : 11;
+
+    for(let i = 1; i <= maxSeq; i++) {
+      const customBus = document.getElementById(`custom_bus_${i}`).value.trim();
+      const customDrv = document.getElementById(`custom_drv_${i}`).value.trim();
+      const selBus = document.getElementById(`sel_bus_${i}`).value;
+      const selDrv = document.getElementById(`sel_drv_${i}`).value;
+
+      const finalDrv = customDrv !== '' ? customDrv : selDrv;
+      const finalBus = customBus !== '' ? customBus : selBus;
+
+      schedule.push({ 
+        turn: i, 
+        bus: finalBus, 
+        driver: finalDrv,
+        isCustomBus: customBus !== '',
+        isCustomDriver: customDrv !== ''
+      });
+
+      if(finalDrv && finalDrv !== "휴무" && finalDrv !== "병가") {
+        assignedDrivers.push(finalDrv);
+      }
+    }
+
+    const payload = { shift, date, isHoliday, schedule, updatedAt: new Date().toLocaleString() };
+    
+    localStorage.setItem(`70_history_${date}_${shift}`, JSON.stringify(payload));
+    localStorage.setItem('70_final_schedule', JSON.stringify(payload));
+
+    updateBoardDisplay();
+    if(showAlert) alert(`[${formatDateWithDay(date)} ${shift}조] 배차 확정 저장 완료!`);
+  }
+
+  function loginDriverAndStartVoice() {
+    const drvName = document.getElementById('drvLoginName').value.trim();
+    const empNo = document.getElementById('drvEmpNo').value.trim();
+    const busNo = document.getElementById('drvBusNo').value.trim();
+
+    if(!drvName) { alert("기사명을 입력하세요."); return; }
+
+    localStorage.setItem('70_last_driver_profile', JSON.stringify({ name: drvName, empNo, busNo }));
+
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    speakTTS(`${drvName} 기사님, 실시간 관제 시스템에 접속되었습니다.`);
+
+    loadDriverSchedule(drvName, busNo);
+  }
+
+  function loadDriverSchedule(drvName, busNo) {
+    const saved = localStorage.getItem('70_final_schedule');
+    const container = document.getElementById('tangListContainer');
+    const card = document.getElementById('drvScheduleCard');
+    
+    if(!saved) {
+      alert("오늘의 확정 배차 정보가 없습니다.");
+      card.style.display = 'none';
+      return;
+    }
+
+    const data = JSON.parse(saved);
+    const myDispatch = data.schedule.find(s => s.driver.includes(drvName));
+
+    if(!myDispatch) {
+      alert(`${drvName} 기사님은 오늘 배정된 순차가 없습니다.`);
+      card.style.display = 'none';
+      return;
+    }
+
+    card.style.display = 'block';
+    const currentTimes = data.isHoliday ? timeTableData.holiday : timeTableData.weekday;
+    const timeObj = currentTimes.find(t => t.turn === myDispatch.turn);
+    const firstTimeStr = timeObj ? timeObj.text : "05:20";
+    const origin = timeObj ? timeObj.origin : "출발지";
+
+    document.getElementById('drvScheduleTitle').innerText = `${drvName} 기사님 (${data.shift}조)`;
+    document.getElementById('drvTurnBadge').innerText = `${myDispatch.turn}순차 (${origin})`;
+    document.getElementById('drvScheduleSubText').innerText = `차량: 경기71아 ${myDispatch.bus || busNo}호 | 첫탕 출발: ${firstTimeStr}`;
+
+    myActiveTangSchedules = [];
+    let [h, m] = firstTimeStr.split(':').map(Number);
+    let baseMin = h * 60 + m;
+
+    container.innerHTML = '';
+
+    for(let tang = 1; tang <= 5; tang++) {
+      let tangMin = baseMin + (tang - 1) * 130;
+      let tangH = Math.floor(tangMin / 60) % 24;
+      let tangM = tangMin % 60;
+      let timeStr = `${String(tangH).padStart(2,'0')}:${String(tangM).padStart(2,'0')}`;
+
+      myActiveTangSchedules.push({ tang, timeStr, min: tangMin, alerted5m: false, alerted1h: false });
+
+      container.innerHTML += `
+        <div class="tang-card" id="tang_card_${tang}">
+          <div>
+            <div class="tang-title">${tang}탕 출발 (${tang === 1 ? origin : '종점/회차'})</div>
+            <div style="font-size:0.72rem; color:#cbd5e1;">출발 5분 전 음성 알림</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="tang-time">${timeStr}</div>
+            <span class="tang-status" id="tang_status_${tang}">대기 중</span>
+          </div>
+        </div>`;
+    }
+
+    startRealtimeScheduler();
+  }
+
+  function startRealtimeScheduler() {
+    if(alertTimer) clearInterval(alertTimer);
+
+    alertTimer = setInterval(() => {
+      const now = new Date();
+      const currentMin = now.getHours() * 60 + now.getMinutes();
+
+      myActiveTangSchedules.forEach(item => {
+        const diff = item.min - currentMin;
+
+        if(item.tang === 1 && !item.alerted1h && diff <= 60 && diff > 50) {
+          item.alerted1h = true;
+          playBeepSound();
+          speakTTS(`1시간 후 1탕 출발 시간입니다. 출근 및 운행 준비 바랍니다.`);
+        }
+
+        if(!item.alerted5m && diff <= 5 && diff >= 0) {
+          item.alerted5m = true;
+          playBeepSound();
+          speakTTS(`주의. ${item.tang}탕 출발 5분 전입니다. 승차하세요.`);
+          
+          const statusEl = document.getElementById(`tang_status_${item.tang}`);
+          if(statusEl) { statusEl.className = "tang-status active"; statusEl.innerText = "출발 임박"; }
+        }
+      });
+    }, 10000);
+  }
+
+  function playBeepSound() {
+    if(!audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.6);
+    } catch(e) { console.log(e); }
+  }
+
+  function speakTTS(text) {
+    if('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const msg = new SpeechSynthesisUtterance(text);
+      msg.lang = 'ko-KR';
+      window.speechSynthesis.speak(msg);
+    }
+  }
+
+  function toggleDriverSearchInput() {
+    const type = document.getElementById('driverSearchType').value;
+    document.getElementById('driverDateBox').style.display = type === 'daily' ? 'block' : 'none';
+    document.getElementById('driverMonthBox').style.display = type !== 'daily' ? 'block' : 'none';
+  }
+
+  function searchPersonalDriverLogs() {
+    const drvName = document.getElementById('drvLoginName').value.trim();
+    if(!drvName) { alert("기사명을 먼저 입력해 주세요."); return; }
+
+    const type = document.getElementById('driverSearchType').value;
+    const targetDate = document.getElementById('driverSearchDate').value;
+    const targetMonth = document.getElementById('driverSearchMonth').value;
+    
+    let matchedLogs = [];
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key.startsWith('70_history_')) {
+        const logData = JSON.parse(localStorage.getItem(key));
+        const logDate = logData.date;
+
+        let isMatch = false;
+        if (type === 'daily' && logDate === targetDate) isMatch = true;
+        if (type === 'monthly' && logDate.startsWith(targetMonth)) isMatch = true;
+        if (type === 'yearly' && logDate.startsWith(targetMonth.substring(0, 4))) isMatch = true;
+
+        if (isMatch) {
+          const mySeq = logData.schedule.find(s => s.driver === drvName);
+          if (mySeq) {
+            matchedLogs.push({
+              date: logDate,
+              shift: logData.shift,
+              turn: mySeq.turn,
+              bus: mySeq.bus,
+              isCustomBus: mySeq.isCustomBus,
+              isCustomDriver: mySeq.isCustomDriver
+            });
+          }
+        }
+      }
+    }
+
+    const printCard = document.getElementById('personalLogPrintArea');
+    const tbody = document.getElementById('personalLogTbody');
+    const headerInfo = document.getElementById('personalLogHeaderInfo');
+
+    if(matchedLogs.length === 0) {
+      alert("해당 기간의 운행 기록이 존재하지 않습니다.");
+      printCard.style.display = 'none';
+      return;
+    }
+
+    matchedLogs.sort((a,b) => a.date.localeCompare(b.date));
+
+    let rangeText = '';
+    if(type === 'daily') rangeText = formatDateWithDay(targetDate);
+    else if(type === 'monthly') rangeText = `${targetMonth.split('-')[0]}년 ${parseInt(targetMonth.split('-')[1])}월`;
+    else rangeText = `${targetMonth.substring(0, 4)}년`;
+
+    headerInfo.innerHTML = `<b>성명:</b> ${drvName} &nbsp;|&nbsp; <b>조회 범위:</b> ${rangeText} &nbsp;|&nbsp; <b>총 운행 횟수:</b> ${matchedLogs.length}회`;
+    tbody.innerHTML = '';
+
+    matchedLogs.forEach(l => {
+      let note = [];
+      if(l.isCustomBus) note.push("예비차 운행");
+      if(l.isCustomDriver) note.push("대타 승무");
+
+      tbody.innerHTML += `
+        <tr>
+          <td>${formatDateWithDay(l.date)}</td>
+          <td>${l.shift}조</td>
+          <td>${l.turn}순차</td>
+          <td>경기71아 ${l.bus}</td>
+          <td>5탕</td>
+          <td>${note.join(', ') || '정상 운행'}</td>
+        </tr>`;
+    });
+
+    printCard.style.display = 'block';
+  }
+
+  function printDriverPersonalLog() {
+    if(document.getElementById('personalLogPrintArea').style.display === 'none') {
+      alert("먼저 운행일지를 조회하세요.");
+      return;
+    }
+    window.print();
+  }
+
+  function renderAdminTimeline() {
+    const date = document.getElementById('adminLogDate').value;
+    const filterShift = document.getElementById('adminLogShift').value;
+    const container = document.getElementById('adminTimelineContainer');
+
+    let historyData = [];
+
+    ['A', 'B'].forEach(shift => {
+      if(filterShift === 'ALL' || filterShift === shift) {
+        const saved = localStorage.getItem(`70_history_${date}_${shift}`);
+        if(saved) historyData.push(JSON.parse(saved));
+      }
+    });
+
+    if(historyData.length === 0) {
+      container.innerHTML = `<div style="text-align:center; color:#cbd5e1; padding:20px;">[${formatDateWithDay(date)}] 저장된 운행 기록이 없습니다.</div>`;
+      return;
+    }
+
+    let html = '';
+    historyData.forEach(data => {
+      html += `<div style="font-weight:bold; color:var(--accent); font-size:1rem; margin-top:10px; border-bottom:1px solid #334155; padding-bottom:4px;">📌 ${formatDateWithDay(data.date)} (${data.shift}조 타임라인)</div>`;
+
+      const currentTimes = data.isHoliday ? timeTableData.holiday : timeTableData.weekday;
+
+      data.schedule.forEach(s => {
+        const timeObj = currentTimes.find(t => t.turn === s.turn);
+        const ft = timeObj ? timeObj.text : "미정";
+        const origin = timeObj ? timeObj.origin : "";
+
+        html += `
+          <div class="timeline-item" style="margin-top:8px;">
+            <div style="font-weight:bold; color:var(--yellow); font-size:0.9rem;">
+              [${s.turn}순차] ${s.driver} 기사 - 차량 ${s.bus}호
+            </div>
+            <div style="font-size:0.8rem; color:#cbd5e1;">
+              📍 첫탕 출발: ${ft} (${origin}) | Total 5탕 스케줄 적용 | ${s.isCustomBus ? '⚠️ 예비차' : ''} ${s.isCustomDriver ? '⚠️ 대타' : ''}
+            </div>
+          </div>`;
+      });
+    });
+
+    container.innerHTML = html;
+  }
+
+  function printAdminTimeline() {
+    window.print();
+  }
+
+  function shareAsPNGImage() {
+    const target = document.getElementById('captureBoard');
+    const fileName = getFormattedFileName();
+
+    html2canvas(target, { backgroundColor: '#1b3a2b', scale: 3 }).then(canvas => {
+      canvas.toBlob(blob => {
+        if (!blob) return;
+        const file = new File([blob], `${fileName}.png`, { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], title: '70번 현장 배차판', text: `${fileName} 배차표입니다.` });
+        } else {
+          const link = document.createElement('a');
+          link.download = `${fileName}.png`;
+          link.href = URL.createObjectURL(blob);
+          link.click();
+        }
+      }, 'image/png');
+    });
+  }
+
+  function loadLeaveTab() {
+    const { drivers } = getMasterData();
+    const sel = document.getElementById('sickDriverSelect');
+    sel.innerHTML = drivers.filter(d => d !== "휴무" && d !== "병가").map(d => `<option value="${d}">${d}</option>`).join('');
+    document.getElementById('sickStartDate').value = todayStr;
+    document.getElementById('sickEndDate').value = todayStr;
+    renderSickList();
+  }
+
+  function addSickLeave() {
+    const driver = document.getElementById('sickDriverSelect').value;
+    const start = document.getElementById('sickStartDate').value;
+    const end = document.getElementById('sickEndDate').value;
+    const reason = document.getElementById('sickReason').value.trim();
+
+    let sickLeaves = JSON.parse(localStorage.getItem('70_sick_leaves')) || [];
+    sickLeaves.push({ id: Date.now(), driver, start, end, reason: reason || "사유 미입력" });
+    localStorage.setItem('70_sick_leaves', JSON.stringify(sickLeaves));
+    alert(`${driver} 기사 병가 등록 완료`);
+    renderSickList();
+  }
+
+  function renderSickList() {
+    const sickLeaves = JSON.parse(localStorage.getItem('70_sick_leaves')) || [];
+    const container = document.getElementById('sickListContainer');
+    if(sickLeaves.length === 0) { container.innerHTML = "등록된 병가 내역이 없습니다."; return; }
+
+    let html = '';
+    sickLeaves.forEach(s => {
+      html += `
+        <div style="background:#0f172a; padding:6px; border-radius:4px; margin-bottom:4px; border-left:3px solid var(--warn); display:flex; justify-content:space-between;">
+          <div><b>${s.driver}</b> (${formatDateWithDay(s.start)} ~ ${formatDateWithDay(s.end)}) - ${s.reason}</div>
+          <button onclick="deleteSickLeave(${s.id})" style="width:auto; padding:2px 6px; margin:0; font-size:0.7rem; background:#475569;">삭제</button>
+        </div>`;
+    });
+    container.innerHTML = html;
+  }
+
+  function deleteSickLeave(id) {
+    let sickLeaves = JSON.parse(localStorage.getItem('70_sick_leaves')) || [];
+    sickLeaves = sickLeaves.filter(s => s.id !== id);
+    localStorage.setItem('70_sick_leaves', JSON.stringify(sickLeaves));
+    renderSickList();
+  }
+
+  function autoFillSchedule() {
+    const shift = document.getElementById('shiftSel').value;
+    const lastData = localStorage.getItem(`70_schedule_${shift}_last`);
+    if(!lastData) { alert("이전 배차 기록이 없습니다."); return; }
+    
+    const prev = JSON.parse(lastData);
+    const isHoliday = isHolidayMode();
+    const maxSeq = isHoliday ? 8 : 11;
+
+    for(let i = 0; i < maxSeq; i++) {
+      let targetSeq = ((i + 2) % maxSeq) + 1;
+      const busEl = document.getElementById(`sel_bus_${targetSeq}`);
+      const drvEl = document.getElementById(`sel_drv_${targetSeq}`);
+      if(busEl && prev[i]) busEl.value = prev[i].bus;
+      if(drvEl && prev[i]) drvEl.value = prev[i].driver;
+    }
+    updateBoardDisplay();
+  }
+
+  function loadSettingsInput() {
+    const { drivers, buses } = getMasterData();
+    document.getElementById('driverListInput').value = drivers.filter(d=>d!=='휴무'&&d!=='병가').join(', ');
+    document.getElementById('busListInput').value = buses.join(', ');
+  }
+
+  function saveMasterSettings() {
+    let dArr = document.getElementById('driverListInput').value.split(',').map(s => s.trim()).filter(Boolean);
+    let bArr = document.getElementById('busListInput').value.split(',').map(s => s.trim()).filter(Boolean);
+
+    localStorage.setItem('70_drivers', JSON.stringify(dArr));
+    localStorage.setItem('70_buses', JSON.stringify(bArr));
+
+    alert("기초 데이터가 저장되었습니다. (기존 배차 및 운행 이력은 안전하게 보존됩니다.)");
+  }
+</script>
+</body>
+</html>
