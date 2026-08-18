@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07131f">
-<title>소신여객 70번 운행관리 V2.5</title>
+<title>소신여객 70번 운행관리 V2.6</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{
@@ -79,6 +79,13 @@ label{display:block;color:var(--muted);font-size:.74rem;margin:0 0 4px}.btn{widt
 .voice-chip{display:inline-block;border-radius:999px;padding:3px 7px;font-size:.68rem;font-weight:900;background:#293d52;color:#d9e8f5;margin:2px}
 .voice-chip.on{background:#164e3b;color:#b7ffe3}
 
+
+.test-panel{background:#0b2031;border:2px solid #2f769e;border-radius:14px;padding:12px;margin:9px 0}
+.test-step{background:#091724;border:1px solid var(--line);border-radius:10px;padding:9px;margin:6px 0}
+.test-ok{color:#86efac;font-weight:900}.test-warn{color:#fde68a;font-weight:900}
+.db-status{border-radius:10px;padding:9px;margin-top:8px;background:#0a1825;border:1px solid #36506a;font-size:.78rem;line-height:1.5}
+.db-status.ok{border-color:#2b8a66;color:#bbf7d0}.db-status.bad{border-color:#b45359;color:#fecaca}
+
 @media(max-width:680px){.project-grid{grid-template-columns:1fr}.master-summary{grid-template-columns:repeat(2,1fr)}}
 
 @media(max-width:680px){.app{padding:7px}.grid2,.grid3{grid-template-columns:1fr}.tabs{gap:3px}.tab{padding:10px 8px;font-size:.78rem}.hero .big{font-size:2rem}.board{overflow-x:auto}.boardrow{min-width:760px}.kpis{grid-template-columns:repeat(3,1fr)}.times{grid-template-columns:repeat(3,1fr)}}
@@ -89,7 +96,7 @@ label{display:block;color:var(--muted);font-size:.74rem;margin:0 0 4px}.btn{widt
 </head>
 <body>
 <div class="app">
-  <div class="top no-print"><div class="brand">🚌 소신여객 70번 운행관리 V2.5</div><div class="role" id="roleLabel">미로그인</div></div>
+  <div class="top no-print"><div class="brand">🚌 소신여객 70번 운행관리 V2.6</div><div class="role" id="roleLabel">미로그인</div></div>
   <div class="tabs no-print" id="tabs">
     <button class="tab active" data-view="today">오늘 운행</button>
     <button class="tab" data-view="project">개발 현황</button>
@@ -156,9 +163,21 @@ label{display:block;color:var(--muted);font-size:.74rem;margin:0 0 4px}.btn{widt
         <div class="project-item"><span class="num">8</span><b>휴가·병가·대타·예비차</b><br><span class="state partial">기본 관리 구현 · 자동 추천 고도화 예정</span></div>
         <div class="project-item"><span class="num">9</span><b>현장형 배차판 PNG/카카오톡 공유</b><br><span class="state ready">구현</span></div>
         <div class="project-item"><span class="num">10</span><b>PC·모바일 세로/가로 반응형</b><br><span class="state partial">기본 대응 · 실기기 검증 필요</span></div>
-        <div class="project-item"><span class="num">11</span><b>중앙 DB 연결</b><br><span class="state pending">마지막 단계</span></div>
+        <div class="project-item"><span class="num">11</span><b>중앙 DB 연결</b><br><span class="state partial">Google Apps Script 연결·왕복 테스트 기능 구현</span></div>
       </div>
     </div>
+
+    <div class="test-panel no-print">
+      <h3 style="margin-top:0">🧪 1인 단계별 실사용 테스트</h3>
+      <div class="test-step"><b>1단계</b> · 기사 로그인: <b>박철완 / 626023</b></div>
+      <div class="test-step"><b>2단계</b> · 날짜별 운행/휴무 조회 및 스케줄 저장</div>
+      <div class="test-step"><b>3단계</b> · 60분 출근준비 + 탕별 10/5/1분 음성·알림 시험</div>
+      <div class="test-step"><b>4단계</b> · 운행완료 기록 및 개인/전체 운행일지 확인</div>
+      <div class="test-step"><b>5단계</b> · Google DB 저장 → 다시 불러오기 → 다른 기기 확인</div>
+      <button class="btn blue" onclick="runOnePersonSelfCheck()">🔎 현재 파일 자동 점검</button>
+      <div id="onePersonCheckResult" class="db-status">아직 점검하지 않았습니다.</div>
+    </div>
+
     <div class="card">
       <h3>👤 마스터 등록 현황</h3>
       <div class="master-summary">
@@ -255,7 +274,18 @@ label{display:block;color:var(--muted);font-size:.74rem;margin:0 0 4px}.btn{widt
       <div id="leaveList" style="margin-top:9px"></div>
     </div>
 
-    <div class="card no-print"><h3>☁ 중앙 저장 연결</h3><p class="note">현재 파일은 로컬에서 즉시 작동합니다. 아래에 Google Apps Script 웹앱 URL을 넣으면 같은 데이터를 중앙 저장소로 동기화할 수 있도록 연결부를 마련했습니다.</p><input id="cloudUrl" placeholder="https://script.google.com/macros/s/.../exec"><div class="splitbtn"><button class="btn blue" onclick="cloudPull()">☁ 불러오기</button><button class="btn green" onclick="cloudPush()">☁ 저장하기</button></div></div>
+    <div class="card no-print"><h3>☁ Google 중앙 DB 연결</h3>
+      <p class="note">Google Apps Script 웹앱 URL을 연결하면 소장 PC와 기사 휴대폰이 같은 70번 데이터를 읽고 저장할 수 있습니다. 먼저 1인 테스트로 연결을 검증합니다.</p>
+      <label>Apps Script 웹앱 URL</label>
+      <input id="cloudUrl" placeholder="https://script.google.com/macros/s/.../exec">
+      <div class="grid3" style="margin-top:7px">
+        <button class="btn slate" style="margin:0" onclick="cloudHealthCheck()">① 연결확인</button>
+        <button class="btn green" style="margin:0" onclick="cloudPush()">② DB 저장</button>
+        <button class="btn blue" style="margin:0" onclick="cloudPull()">③ DB 불러오기</button>
+      </div>
+      <button class="btn yellow" onclick="cloudRoundTripTest()">🧪 저장 → 재조회 왕복 테스트</button>
+      <div id="cloudStatus" class="db-status">DB 미연결</div>
+    </div>
     <div class="card no-print"><h3>🔐 관리자 계정</h3><div class="grid2"><input id="newAdminId" placeholder="새 관리자 ID"><input id="newAdminPw" type="password" placeholder="새 비밀번호"></div><button class="btn orange" onclick="changeAdmin()">관리자 계정 변경</button></div>
     <div class="card no-print"><h3>💾 백업</h3><div class="splitbtn"><button class="btn slate" onclick="exportData()">JSON 백업</button><label class="btn slate" style="text-align:center">JSON 복원<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label></div></div>
   </section>
@@ -271,10 +301,10 @@ label{display:block;color:var(--muted);font-size:.74rem;margin:0 0 4px}.btn{widt
 <script>
 const WEEKDAY = {"1": [["", "05:20", "06:30"], ["07:25", "09:05", "10:45"], ["11:20", "12:50", "14:22"], ["15:00", "16:38", "18:15"], ["19:00", "20:30", "22:00"]], "2": [["", "05:40", "06:55"], ["07:45", "09:25", "11:05"], ["11:40", "13:10", "14:42"], ["15:21", "17:02", "18:40"], ["19:22", "20:45", "22:09"]], "3": [["04:50", "06:05", "07:25"], ["08:05", "09:45", "11:25"], ["12:00", "13:30", "15:02"], ["15:42", "17:22", "19:05"], ["19:44", "21:06", "22:28"]], "4": [["05:05", "06:25", "07:45"], ["08:25", "10:05", "11:45"], ["12:20", "13:50", "15:22"], ["16:04", "17:43", "19:30"], ["20:06", "21:26", "22:46"]], "5": [["05:20", "06:45", "08:10"], ["08:50", "10:25", "12:02"], ["12:40", "14:10", "15:42"], ["16:26", "18:08", "19:58"], ["20:28", "21:46", "23:05"]], "6": [["05:36", "07:04", "08:32"], ["09:15", "10:50", "12:25"], ["13:00", "14:30", "16:02"], ["16:48", "18:32", "20:22"], ["20:50", "22:05", "23:20"]], "7": [["05:52", "07:22", "08:52"], ["09:40", "11:13", "12:45"], ["13:20", "14:50", "16:24"], ["17:10", "18:48", "20:40"], ["21:15", "22:30", "23:45"]], "8": [["06:08", "07:40", "09:11"], ["10:00", "11:32", "13:05"], ["13:40", "15:10", "16:42"], ["17:32", "19:13", "21:00"], ["21:40", "22:55", "00:10"]], "9": [["06:25", "08:03", "09:40"], ["10:20", "11:52", "13:24"], ["14:00", "15:35", "17:11"], ["17:54", "19:34", "21:24"], ["22:05", "23:20", "00:30"]], "10": [["06:45", "08:23", "10:00"], ["10:40", "12:10", "13:42"], ["14:20", "15:55", "17:31"], ["18:16", "19:55", "21:35"], ["22:30", "23:45", "00:55"]], "11": [["07:05", "08:45", "10:25"], ["11:00", "12:30", "14:02"], ["14:40", "16:15", "17:50"], ["18:38", "20:10", "21:42"], ["22:50", "00:05", "01:15"]]};
 const HOLIDAY = {"1": [["", "05:20", "06:30"], ["07:20", "08:50", "10:20"], ["11:20", "12:55", "14:30"], ["15:20", "17:00", "18:40"], ["19:20", "20:45", "22:10"]], "2": [["", "05:40", "06:55"], ["07:50", "09:20", "10:50"], ["11:50", "13:25", "15:00"], ["15:50", "17:25", "19:00"], ["19:50", "21:13", "22:36"]], "3": [["04:50", "06:05", "07:20"], ["08:20", "09:50", "11:20"], ["12:20", "13:55", "15:30"], ["16:20", "17:50", "19:20"], ["20:20", "21:43", "23:06"]], "4": [["05:15", "06:30", "07:50"], ["08:50", "10:20", "11:50"], ["12:50", "14:25", "16:00"], ["16:50", "18:20", "19:50"], ["20:50", "22:13", "23:36"]], "5": [["05:40", "06:58", "08:20"], ["09:20", "10:50", "12:20"], ["13:20", "14:55", "16:30"], ["17:20", "18:50", "20:20"], ["21:20", "22:40", "00:00"]], "6": [["06:05", "07:20", "08:50"], ["09:50", "11:25", "13:00"], ["13:50", "15:30", "17:10"], ["17:50", "19:20", "20:50"], ["21:50", "23:05", "00:20"]], "7": [["06:30", "07:50", "09:20"], ["10:20", "11:55", "13:30"], ["14:20", "16:00", "17:40"], ["18:20", "19:50", "21:20"], ["22:20", "23:34", "00:48"]], "8": [["06:55", "08:20", "09:50"], ["10:50", "12:25", "14:00"], ["14:50", "16:30", "18:10"], ["18:50", "20:20", "21:50"], ["22:50", "00:05", "01:15"]]};
-const KEY='sosin70_v2_5_state';
+const KEY='sosin70_v2_6_state';
 let role=null,currentDriver=null,voiceTimer=null;
 
-const seed={"admin":{"id":"admin","pw":"1234"},"drivers":[{"name":"홍선준","empNo":"","shift":"A","seq":7,"bus":"1499","role":"정규"},{"name":"여승철","empNo":"","shift":"A","seq":8,"bus":"1503","role":"정규"},{"name":"문상식","empNo":"","shift":"A","seq":9,"bus":"1504","role":"정규"},{"name":"변종원","empNo":"","shift":"A","seq":10,"bus":"1505","role":"정규"},{"name":"서성덕","empNo":"","shift":"A","seq":11,"bus":"1506","role":"정규"},{"name":"최광로","empNo":"","shift":"A","seq":1,"bus":"1507","role":"정규"},{"name":"김육","empNo":"","shift":"A","seq":2,"bus":"1508","role":"정규"},{"name":"신경용","empNo":"","shift":"A","seq":3,"bus":"1608","role":"정규"},{"name":"김민석","empNo":"","shift":"A","seq":4,"bus":"1609","role":"정규"},{"name":"김동석","empNo":"","shift":"A","seq":5,"bus":"1610","role":"정규"},{"name":"안준호","empNo":"","shift":"A","seq":6,"bus":"1622","role":"정규"},{"name":"박철완","empNo":"626023","shift":"B","seq":7,"bus":"1499","role":"정규"},{"name":"박영민","empNo":"","shift":"B","seq":8,"bus":"1503","role":"정규"},{"name":"박현우","empNo":"","shift":"B","seq":9,"bus":"1504","role":"정규"},{"name":"한성혁","empNo":"","shift":"B","seq":10,"bus":"1505","role":"정규"},{"name":"최일규","empNo":"","shift":"B","seq":11,"bus":"1506","role":"정규"},{"name":"김호","empNo":"","shift":"B","seq":1,"bus":"1507","role":"정규"},{"name":"권경율","empNo":"","shift":"B","seq":2,"bus":"1508","role":"정규"},{"name":"박영기","empNo":"","shift":"B","seq":3,"bus":"1608","role":"정규"},{"name":"유재웅","empNo":"","shift":"B","seq":4,"bus":"1609","role":"정규"},{"name":"천승준","empNo":"","shift":"B","seq":5,"bus":"1610","role":"정규"},{"name":"이응주","empNo":"","shift":"","seq":6,"bus":"1622","role":"대타","note":"70번 대타 기사"},{"name":"이기삼","empNo":"","shift":"","seq":7,"bus":"1504","role":"대타","note":"2026-08-31까지 5번/70번 대타, 2026-09-01부터 75번 이동 예정"},{"name":"강호익","empNo":"","shift":"","seq":3,"bus":"1610","role":"대타","note":"70번 대타 기사"},{"name":"이재천","empNo":"","shift":"B","seq":6,"bus":"1622","role":"정규","note":"2026년 8월 병가"}],"buses":["1499","1503","1504","1505","1506","1507","1508","1608","1609","1610","1622","예비1601"],"holidays":[],"voice":{"enabled":true,"leads":[15,5,1]},"cloudUrl":"","leaves":[{"id":2026081701,"driver":"박철완","type":"휴가","start":"2026-08-17","end":"2026-08-17","reason":"현장 자료"},{"id":2026081702,"driver":"박영민","type":"휴가","start":"2026-08-17","end":"2026-08-17","reason":"현장 자료"},{"id":2026081703,"driver":"천승준","type":"휴가","start":"2026-08-17","end":"2026-08-17","reason":"현장 자료"},{"id":2026081704,"driver":"한성혁","type":"휴가","start":"2026-08-17","end":"2026-08-17","reason":"현장 자료"},{"id":2026080101,"driver":"이재천","type":"병가","start":"2026-08-01","end":"2026-08-31","reason":"8월 한 달 병가"}],"rotationSteps":2,"schedules":{"2026-08-17_B":{"date":"2026-08-17","shift":"B","isHoliday":true,"items":[{"seq":5,"driver":"최일규","bus":"1506"},{"seq":6,"driver":"김호","bus":"1507"},{"seq":7,"driver":"이기삼","bus":"1504"},{"seq":8,"driver":"권경율","bus":"1508"},{"seq":1,"driver":"박영기","bus":"1608"},{"seq":2,"driver":"유재웅","bus":"1609"},{"seq":3,"driver":"강호익","bus":"1610"},{"seq":4,"driver":"박현우","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-18_A":{"date":"2026-08-18","shift":"A","isHoliday":false,"items":[{"seq":7,"driver":"홍선준","bus":"1499"},{"seq":8,"driver":"여승철","bus":"1503"},{"seq":9,"driver":"문상식","bus":"1504"},{"seq":10,"driver":"변종원","bus":"1505"},{"seq":11,"driver":"서성덕","bus":"1506"},{"seq":1,"driver":"최광로","bus":"1507"},{"seq":2,"driver":"김육","bus":"1508"},{"seq":3,"driver":"신경용","bus":"1608"},{"seq":4,"driver":"김민석","bus":"1609"},{"seq":5,"driver":"김동석","bus":"1610"},{"seq":6,"driver":"안준호","bus":"1622"}],"source":"8월18일 A조 현장 상황판 참고"},"2026-08-19_B":{"date":"2026-08-19","shift":"B","isHoliday":false,"items":[{"seq":7,"driver":"박철완","bus":"1499"},{"seq":8,"driver":"박영민","bus":"1503"},{"seq":9,"driver":"박현우","bus":"1504"},{"seq":10,"driver":"한성혁","bus":"1505"},{"seq":11,"driver":"최일규","bus":"1506"},{"seq":1,"driver":"김호","bus":"1507"},{"seq":2,"driver":"권경율","bus":"1508"},{"seq":3,"driver":"박영기","bus":"1608"},{"seq":4,"driver":"유재웅","bus":"1609"},{"seq":5,"driver":"천승준","bus":"1610"},{"seq":6,"driver":"이응주","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-01_B":{"date":"2026-08-01","shift":"B","isHoliday":true,"items":[{"seq":1,"driver":"박영민","bus":"1503"},{"seq":2,"driver":"강호익","bus":"1504"},{"seq":3,"driver":"한성혁","bus":"1505"},{"seq":4,"driver":"최일규","bus":"1506"},{"seq":5,"driver":"김호","bus":"1507"},{"seq":6,"driver":"박현우","bus":"1508"},{"seq":7,"driver":"이응주","bus":"1622"},{"seq":8,"driver":"유재웅","bus":"1609"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-03_B":{"date":"2026-08-03","shift":"B","isHoliday":false,"items":[{"seq":2,"driver":"박철완","bus":"1499"},{"seq":3,"driver":"박영민","bus":"1503"},{"seq":4,"driver":"강호익","bus":"1504"},{"seq":5,"driver":"한성혁","bus":"1505"},{"seq":6,"driver":"최일규","bus":"1506"},{"seq":7,"driver":"김호","bus":"1507"},{"seq":8,"driver":"권경율","bus":"1508"},{"seq":9,"driver":"박영기","bus":"1608"},{"seq":10,"driver":"유재웅","bus":"1609"},{"seq":11,"driver":"천승준","bus":"1610"},{"seq":1,"driver":"이응주","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-05_B":{"date":"2026-08-05","shift":"B","isHoliday":false,"items":[{"seq":4,"driver":"박철완","bus":"1499"},{"seq":5,"driver":"박영민","bus":"1503"},{"seq":6,"driver":"강호익","bus":"1504"},{"seq":7,"driver":"한성혁","bus":"1505"},{"seq":8,"driver":"최일규","bus":"1506"},{"seq":9,"driver":"김호","bus":"1507"},{"seq":10,"driver":"권경율","bus":"1508"},{"seq":11,"driver":"박영기","bus":"1608"},{"seq":1,"driver":"유재웅","bus":"1609"},{"seq":2,"driver":"천승준","bus":"1610"},{"seq":3,"driver":"박현우","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-07_B":{"date":"2026-08-07","shift":"B","isHoliday":false,"items":[{"seq":6,"driver":"박철완","bus":"1499"},{"seq":7,"driver":"박영민","bus":"1503"},{"seq":8,"driver":"박현우","bus":"1504"},{"seq":9,"driver":"한성혁","bus":"1505"},{"seq":10,"driver":"최일규","bus":"1506"},{"seq":11,"driver":"강호익","bus":"1507"},{"seq":1,"driver":"권경율","bus":"1508"},{"seq":2,"driver":"박영기","bus":"1608"},{"seq":3,"driver":"유재웅","bus":"1609"},{"seq":4,"driver":"천승준","bus":"1610"},{"seq":5,"driver":"이응주","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-11_B":{"date":"2026-08-11","shift":"B","isHoliday":false,"items":[{"seq":10,"driver":"박철완","bus":"1499"},{"seq":11,"driver":"박영민","bus":"1503"},{"seq":1,"driver":"이기삼","bus":"1504"},{"seq":2,"driver":"한성혁","bus":"1505"},{"seq":3,"driver":"강호익","bus":"1506"},{"seq":4,"driver":"김호","bus":"1507"},{"seq":5,"driver":"권경율","bus":"1508"},{"seq":6,"driver":"박영기","bus":"1608"},{"seq":7,"driver":"유재웅","bus":"1609"},{"seq":8,"driver":"천승준","bus":"1610"},{"seq":9,"driver":"박현우","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-13_B":{"date":"2026-08-13","shift":"B","isHoliday":false,"items":[{"seq":1,"driver":"박철완","bus":"1499"},{"seq":2,"driver":"박영민","bus":"1503"},{"seq":3,"driver":"박현우","bus":"1504"},{"seq":4,"driver":"강호익","bus":"1505"},{"seq":5,"driver":"최일규","bus":"1506"},{"seq":6,"driver":"김호","bus":"1507"},{"seq":7,"driver":"권경율","bus":"1508"},{"seq":8,"driver":"박영기","bus":"1608"},{"seq":9,"driver":"유재웅","bus":"1609"},{"seq":10,"driver":"천승준","bus":"1610"},{"seq":11,"driver":"이응주","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-15_B":{"date":"2026-08-15","shift":"B","isHoliday":true,"items":[{"seq":3,"driver":"박철완","bus":"1499"},{"seq":4,"driver":"박영민","bus":"1503"},{"seq":5,"driver":"이기삼","bus":"1504"},{"seq":6,"driver":"한성혁","bus":"1505"},{"seq":7,"driver":"권경율","bus":"1508"},{"seq":8,"driver":"강호익","bus":"1507"},{"seq":1,"driver":"천승준","bus":"1610"},{"seq":2,"driver":"이응주","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"}},"runLogs":{},"rotation":{"anchorDate":"2026-08-18","anchorShift":"A","step":2,"anchors":{"A":{"date":"2026-08-18","items":[{"seq":7,"driver":"홍선준","bus":"1499"},{"seq":8,"driver":"여승철","bus":"1503"},{"seq":9,"driver":"문상식","bus":"1504"},{"seq":10,"driver":"변종원","bus":"1505"},{"seq":11,"driver":"서성덕","bus":"1506"},{"seq":1,"driver":"최광로","bus":"1507"},{"seq":2,"driver":"김육","bus":"1508"},{"seq":3,"driver":"신경용","bus":"1608"},{"seq":4,"driver":"김민석","bus":"1609"},{"seq":5,"driver":"김동석","bus":"1610"},{"seq":6,"driver":"안준호","bus":"1622"}]},"B":{"date":"2026-08-19","items":[{"seq":7,"driver":"박철완","bus":"1499"},{"seq":8,"driver":"박영민","bus":"1503"},{"seq":9,"driver":"박현우","bus":"1504"},{"seq":10,"driver":"한성혁","bus":"1505"},{"seq":11,"driver":"최일규","bus":"1506"},{"seq":1,"driver":"김호","bus":"1507"},{"seq":2,"driver":"권경율","bus":"1508"},{"seq":3,"driver":"박영기","bus":"1608"},{"seq":4,"driver":"유재웅","bus":"1609"},{"seq":5,"driver":"천승준","bus":"1610"},{"seq":6,"driver":"이재천","bus":"1622"}]}}},"driverAlerts":{"prepLead":60,"tangLeads":[10,5,1],"armed":{}}};
+const seed={"admin":{"id":"admin","pw":"1234"},"drivers":[{"name":"홍선준","empNo":"","shift":"A","seq":7,"bus":"1499","role":"정규"},{"name":"여승철","empNo":"","shift":"A","seq":8,"bus":"1503","role":"정규"},{"name":"문상식","empNo":"","shift":"A","seq":9,"bus":"1504","role":"정규"},{"name":"변종원","empNo":"","shift":"A","seq":10,"bus":"1505","role":"정규"},{"name":"서성덕","empNo":"","shift":"A","seq":11,"bus":"1506","role":"정규"},{"name":"최광로","empNo":"","shift":"A","seq":1,"bus":"1507","role":"정규"},{"name":"김육","empNo":"","shift":"A","seq":2,"bus":"1508","role":"정규"},{"name":"신경용","empNo":"","shift":"A","seq":3,"bus":"1608","role":"정규"},{"name":"김민석","empNo":"","shift":"A","seq":4,"bus":"1609","role":"정규"},{"name":"김동석","empNo":"","shift":"A","seq":5,"bus":"1610","role":"정규"},{"name":"안준호","empNo":"","shift":"A","seq":6,"bus":"1622","role":"정규"},{"name":"박철완","empNo":"626023","shift":"B","seq":7,"bus":"1499","role":"정규"},{"name":"박영민","empNo":"","shift":"B","seq":8,"bus":"1503","role":"정규"},{"name":"박현우","empNo":"","shift":"B","seq":9,"bus":"1504","role":"정규"},{"name":"한성혁","empNo":"","shift":"B","seq":10,"bus":"1505","role":"정규"},{"name":"최일규","empNo":"","shift":"B","seq":11,"bus":"1506","role":"정규"},{"name":"김호","empNo":"","shift":"B","seq":1,"bus":"1507","role":"정규"},{"name":"권경율","empNo":"","shift":"B","seq":2,"bus":"1508","role":"정규"},{"name":"박영기","empNo":"","shift":"B","seq":3,"bus":"1608","role":"정규"},{"name":"유재웅","empNo":"","shift":"B","seq":4,"bus":"1609","role":"정규"},{"name":"천승준","empNo":"","shift":"B","seq":5,"bus":"1610","role":"정규"},{"name":"이응주","empNo":"","shift":"","seq":6,"bus":"1622","role":"대타","note":"70번 대타 기사"},{"name":"이기삼","empNo":"","shift":"","seq":7,"bus":"1504","role":"대타","note":"2026-08-31까지 5번/70번 대타, 2026-09-01부터 75번 이동 예정"},{"name":"강호익","empNo":"","shift":"","seq":3,"bus":"1610","role":"대타","note":"70번 대타 기사"},{"name":"이재천","empNo":"","shift":"B","seq":6,"bus":"1622","role":"정규","note":"2026년 8월 병가"}],"buses":["1499","1503","1504","1505","1506","1507","1508","1608","1609","1610","1622","예비1601"],"holidays":[],"voice":{"enabled":true,"leads":[15,5,1]},"cloudUrl":"","leaves":[{"id":2026081701,"driver":"박철완","type":"휴가","start":"2026-08-17","end":"2026-08-17","reason":"현장 자료"},{"id":2026081702,"driver":"박영민","type":"휴가","start":"2026-08-17","end":"2026-08-17","reason":"현장 자료"},{"id":2026081703,"driver":"천승준","type":"휴가","start":"2026-08-17","end":"2026-08-17","reason":"현장 자료"},{"id":2026081704,"driver":"한성혁","type":"휴가","start":"2026-08-17","end":"2026-08-17","reason":"현장 자료"},{"id":2026080101,"driver":"이재천","type":"병가","start":"2026-08-01","end":"2026-08-31","reason":"8월 한 달 병가"}],"rotationSteps":2,"schedules":{"2026-08-17_B":{"date":"2026-08-17","shift":"B","isHoliday":true,"items":[{"seq":5,"driver":"최일규","bus":"1506"},{"seq":6,"driver":"김호","bus":"1507"},{"seq":7,"driver":"이기삼","bus":"1504"},{"seq":8,"driver":"권경율","bus":"1508"},{"seq":1,"driver":"박영기","bus":"1608"},{"seq":2,"driver":"유재웅","bus":"1609"},{"seq":3,"driver":"강호익","bus":"1610"},{"seq":4,"driver":"박현우","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-18_A":{"date":"2026-08-18","shift":"A","isHoliday":false,"items":[{"seq":7,"driver":"홍선준","bus":"1499"},{"seq":8,"driver":"여승철","bus":"1503"},{"seq":9,"driver":"문상식","bus":"1504"},{"seq":10,"driver":"변종원","bus":"1505"},{"seq":11,"driver":"서성덕","bus":"1506"},{"seq":1,"driver":"최광로","bus":"1507"},{"seq":2,"driver":"김육","bus":"1508"},{"seq":3,"driver":"신경용","bus":"1608"},{"seq":4,"driver":"김민석","bus":"1609"},{"seq":5,"driver":"김동석","bus":"1610"},{"seq":6,"driver":"안준호","bus":"1622"}],"source":"8월18일 A조 현장 상황판 참고"},"2026-08-19_B":{"date":"2026-08-19","shift":"B","isHoliday":false,"items":[{"seq":7,"driver":"박철완","bus":"1499"},{"seq":8,"driver":"박영민","bus":"1503"},{"seq":9,"driver":"박현우","bus":"1504"},{"seq":10,"driver":"한성혁","bus":"1505"},{"seq":11,"driver":"최일규","bus":"1506"},{"seq":1,"driver":"김호","bus":"1507"},{"seq":2,"driver":"권경율","bus":"1508"},{"seq":3,"driver":"박영기","bus":"1608"},{"seq":4,"driver":"유재웅","bus":"1609"},{"seq":5,"driver":"천승준","bus":"1610"},{"seq":6,"driver":"이응주","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-01_B":{"date":"2026-08-01","shift":"B","isHoliday":true,"items":[{"seq":1,"driver":"박영민","bus":"1503"},{"seq":2,"driver":"강호익","bus":"1504"},{"seq":3,"driver":"한성혁","bus":"1505"},{"seq":4,"driver":"최일규","bus":"1506"},{"seq":5,"driver":"김호","bus":"1507"},{"seq":6,"driver":"박현우","bus":"1508"},{"seq":7,"driver":"이응주","bus":"1622"},{"seq":8,"driver":"유재웅","bus":"1609"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-03_B":{"date":"2026-08-03","shift":"B","isHoliday":false,"items":[{"seq":2,"driver":"박철완","bus":"1499"},{"seq":3,"driver":"박영민","bus":"1503"},{"seq":4,"driver":"강호익","bus":"1504"},{"seq":5,"driver":"한성혁","bus":"1505"},{"seq":6,"driver":"최일규","bus":"1506"},{"seq":7,"driver":"김호","bus":"1507"},{"seq":8,"driver":"권경율","bus":"1508"},{"seq":9,"driver":"박영기","bus":"1608"},{"seq":10,"driver":"유재웅","bus":"1609"},{"seq":11,"driver":"천승준","bus":"1610"},{"seq":1,"driver":"이응주","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-05_B":{"date":"2026-08-05","shift":"B","isHoliday":false,"items":[{"seq":4,"driver":"박철완","bus":"1499"},{"seq":5,"driver":"박영민","bus":"1503"},{"seq":6,"driver":"강호익","bus":"1504"},{"seq":7,"driver":"한성혁","bus":"1505"},{"seq":8,"driver":"최일규","bus":"1506"},{"seq":9,"driver":"김호","bus":"1507"},{"seq":10,"driver":"권경율","bus":"1508"},{"seq":11,"driver":"박영기","bus":"1608"},{"seq":1,"driver":"유재웅","bus":"1609"},{"seq":2,"driver":"천승준","bus":"1610"},{"seq":3,"driver":"박현우","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-07_B":{"date":"2026-08-07","shift":"B","isHoliday":false,"items":[{"seq":6,"driver":"박철완","bus":"1499"},{"seq":7,"driver":"박영민","bus":"1503"},{"seq":8,"driver":"박현우","bus":"1504"},{"seq":9,"driver":"한성혁","bus":"1505"},{"seq":10,"driver":"최일규","bus":"1506"},{"seq":11,"driver":"강호익","bus":"1507"},{"seq":1,"driver":"권경율","bus":"1508"},{"seq":2,"driver":"박영기","bus":"1608"},{"seq":3,"driver":"유재웅","bus":"1609"},{"seq":4,"driver":"천승준","bus":"1610"},{"seq":5,"driver":"이응주","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-11_B":{"date":"2026-08-11","shift":"B","isHoliday":false,"items":[{"seq":10,"driver":"박철완","bus":"1499"},{"seq":11,"driver":"박영민","bus":"1503"},{"seq":1,"driver":"이기삼","bus":"1504"},{"seq":2,"driver":"한성혁","bus":"1505"},{"seq":3,"driver":"강호익","bus":"1506"},{"seq":4,"driver":"김호","bus":"1507"},{"seq":5,"driver":"권경율","bus":"1508"},{"seq":6,"driver":"박영기","bus":"1608"},{"seq":7,"driver":"유재웅","bus":"1609"},{"seq":8,"driver":"천승준","bus":"1610"},{"seq":9,"driver":"박현우","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-13_B":{"date":"2026-08-13","shift":"B","isHoliday":false,"items":[{"seq":1,"driver":"박철완","bus":"1499"},{"seq":2,"driver":"박영민","bus":"1503"},{"seq":3,"driver":"박현우","bus":"1504"},{"seq":4,"driver":"강호익","bus":"1505"},{"seq":5,"driver":"최일규","bus":"1506"},{"seq":6,"driver":"김호","bus":"1507"},{"seq":7,"driver":"권경율","bus":"1508"},{"seq":8,"driver":"박영기","bus":"1608"},{"seq":9,"driver":"유재웅","bus":"1609"},{"seq":10,"driver":"천승준","bus":"1610"},{"seq":11,"driver":"이응주","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-15_B":{"date":"2026-08-15","shift":"B","isHoliday":true,"items":[{"seq":3,"driver":"박철완","bus":"1499"},{"seq":4,"driver":"박영민","bus":"1503"},{"seq":5,"driver":"이기삼","bus":"1504"},{"seq":6,"driver":"한성혁","bus":"1505"},{"seq":7,"driver":"권경율","bus":"1508"},{"seq":8,"driver":"강호익","bus":"1507"},{"seq":1,"driver":"천승준","bus":"1610"},{"seq":2,"driver":"이응주","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"}},"runLogs":{},"rotation":{"anchorDate":"2026-08-18","anchorShift":"A","step":2,"anchors":{"A":{"date":"2026-08-18","items":[{"seq":7,"driver":"홍선준","bus":"1499"},{"seq":8,"driver":"여승철","bus":"1503"},{"seq":9,"driver":"문상식","bus":"1504"},{"seq":10,"driver":"변종원","bus":"1505"},{"seq":11,"driver":"서성덕","bus":"1506"},{"seq":1,"driver":"최광로","bus":"1507"},{"seq":2,"driver":"김육","bus":"1508"},{"seq":3,"driver":"신경용","bus":"1608"},{"seq":4,"driver":"김민석","bus":"1609"},{"seq":5,"driver":"김동석","bus":"1610"},{"seq":6,"driver":"안준호","bus":"1622"}]},"B":{"date":"2026-08-19","items":[{"seq":7,"driver":"박철완","bus":"1499"},{"seq":8,"driver":"박영민","bus":"1503"},{"seq":9,"driver":"박현우","bus":"1504"},{"seq":10,"driver":"한성혁","bus":"1505"},{"seq":11,"driver":"최일규","bus":"1506"},{"seq":1,"driver":"김호","bus":"1507"},{"seq":2,"driver":"권경율","bus":"1508"},{"seq":3,"driver":"박영기","bus":"1608"},{"seq":4,"driver":"유재웅","bus":"1609"},{"seq":5,"driver":"천승준","bus":"1610"},{"seq":6,"driver":"이재천","bus":"1622"}]}}},"driverAlerts":{"prepLead":60,"tangLeads":[10,5,1],"armed":{}},"cloud":{"deviceId":"","lastSyncAt":"","lastSyncResult":"","schemaVersion":"2.6"}};
 function clone(o){return JSON.parse(JSON.stringify(o))}
 function state(){
   try{
@@ -287,6 +317,7 @@ function state(){
     s.runLogs=saved.runLogs||{};
     s.driverAlerts=Object.assign(clone(seed.driverAlerts),saved.driverAlerts||{});
     s.driverAlerts.armed=Object.assign({},seed.driverAlerts.armed||{},saved.driverAlerts?.armed||{});
+    s.cloud=Object.assign(clone(seed.cloud||{}),saved.cloud||{});
     return s;
   }catch(e){return clone(seed)}
 }
@@ -725,8 +756,134 @@ function renderLeaveList(){
   leaveList.innerHTML=arr.length?arr.map(x=>`<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;background:#0b1b2a;border:1px solid var(--line);border-radius:8px;padding:7px;margin:5px 0"><div><b>${esc(x.driver)}</b> · ${esc(x.type)} · ${x.start}${x.end!==x.start?' ~ '+x.end:''}<div class="note">${esc(x.reason||'')}</div></div><button class="btn red" style="width:auto;margin:0;padding:7px 10px" onclick="deleteLeave(${x.id})">삭제</button></div>`).join(''):'등록 없음';
 }
 
-async function cloudPush(){let s=state(),url=cloudUrl.value.trim()||s.cloudUrl;if(!url){alert('Google Apps Script 웹앱 URL을 입력하세요.');return}s.cloudUrl=url;saveState(s);try{await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'save',key:'sosin70_v2',data:s})});alert('중앙 저장 요청을 전송했습니다. 다른 기기에서 불러오기로 확인하세요.')}catch(e){alert('중앙 저장 실패: '+e.message)}}
-async function cloudPull(){let s=state(),url=cloudUrl.value.trim()||s.cloudUrl;if(!url){alert('Google Apps Script 웹앱 URL을 입력하세요.');return}try{let r=await fetch(url+(url.includes('?')?'&':'?')+'action=get&key=sosin70_v2');let j=await r.json();if(!j.data)throw Error('저장된 데이터가 없습니다.');saveState(j.data);alert('중앙 데이터를 불러왔습니다.');location.reload()}catch(e){alert('중앙 불러오기 실패: '+e.message)}}
+
+function getDeviceId(){
+  let s=state();
+  if(!s.cloud.deviceId){
+    s.cloud.deviceId='dev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
+    saveState(s);
+  }
+  return s.cloud.deviceId;
+}
+function setCloudStatus(text,ok=null){
+  let el=document.getElementById('cloudStatus');if(!el)return;
+  el.textContent=text;el.className='db-status'+(ok===true?' ok':ok===false?' bad':'');
+}
+function getCloudBaseUrl(){
+  let s=state(),url=(document.getElementById('cloudUrl')?.value||s.cloudUrl||'').trim();
+  if(url){s.cloudUrl=url;saveState(s)}
+  return url;
+}
+function jsonp(url,timeout=12000){
+  return new Promise((resolve,reject)=>{
+    let cb='sosin70_cb_'+Date.now()+'_'+Math.floor(Math.random()*10000);
+    let script=document.createElement('script'),timer;
+    window[cb]=(data)=>{clearTimeout(timer);delete window[cb];script.remove();resolve(data)};
+    script.onerror=()=>{clearTimeout(timer);delete window[cb];script.remove();reject(new Error('DB 응답을 받지 못했습니다.'))};
+    script.src=url+(url.includes('?')?'&':'?')+'callback='+encodeURIComponent(cb);
+    document.head.appendChild(script);
+    timer=setTimeout(()=>{delete window[cb];script.remove();reject(new Error('DB 응답 시간 초과'))},timeout);
+  });
+}
+function publicStateForCloud(){
+  let s=state(),copy=clone(s);
+  // 관리자 비밀번호는 중앙 동기화 데이터에서 제외
+  if(copy.admin)copy.admin={id:copy.admin.id,pw:''};
+  copy.cloud=copy.cloud||{};
+  copy.cloud.deviceId=getDeviceId();
+  copy.cloud.schemaVersion='2.6';
+  copy.cloud.exportedAt=new Date().toISOString();
+  return copy;
+}
+async function cloudHealthCheck(){
+  let url=getCloudBaseUrl();
+  if(!url){setCloudStatus('Apps Script 웹앱 URL을 먼저 입력하세요.',false);return false}
+  setCloudStatus('Google DB 연결 확인 중...');
+  try{
+    let r=await jsonp(url+'?action=health');
+    if(!r?.ok)throw new Error(r?.error||'health 실패');
+    setCloudStatus(`✅ DB 연결 정상 · 서버시각 ${r.serverTime||''}`,true);
+    return true;
+  }catch(e){setCloudStatus('❌ DB 연결 실패: '+e.message,false);return false}
+}
+
+async function cloudPush(){
+  let url=getCloudBaseUrl();
+  if(!url){setCloudStatus('Apps Script 웹앱 URL을 입력하세요.',false);return false}
+  setCloudStatus('DB 저장 요청 전송 중...');
+  let payload=publicStateForCloud();
+  try{
+    await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'save',key:'sosin70_v2_6',deviceId:getDeviceId(),data:payload})});
+    // no-cors POST의 응답은 읽을 수 없으므로 실제 재조회로 검증
+    await new Promise(r=>setTimeout(r,1800));
+    let verify=await jsonp(url+'?action=get&key=sosin70_v2_6&ts='+Date.now());
+    if(!verify?.ok||!verify.data)throw new Error(verify?.error||'저장 후 재조회 실패');
+    let remote=verify.data;
+    let localStamp=payload.cloud?.exportedAt,remoteStamp=remote.cloud?.exportedAt;
+    if(localStamp&&remoteStamp&&localStamp!==remoteStamp)throw new Error('재조회 데이터가 방금 저장한 버전과 다릅니다.');
+    let s=state();s.cloud.lastSyncAt=new Date().toISOString();s.cloud.lastSyncResult='save_ok';saveState(s);
+    setCloudStatus('✅ Google DB 저장 및 재조회 확인 완료',true);
+    return true;
+  }catch(e){
+    setCloudStatus('❌ DB 저장 검증 실패: '+e.message,false);return false;
+  }
+}
+async function cloudPull(){
+  let url=getCloudBaseUrl();
+  if(!url){setCloudStatus('Apps Script 웹앱 URL을 입력하세요.',false);return false}
+  setCloudStatus('DB에서 데이터 불러오는 중...');
+  try{
+    let r=await jsonp(url+'?action=get&key=sosin70_v2_6&ts='+Date.now());
+    if(!r?.ok)throw new Error(r?.error||'불러오기 실패');
+    if(!r.data)throw new Error('DB에 저장된 70번 데이터가 없습니다.');
+    let remote=r.data,local=state();
+    // 로컬 관리자 계정은 보존
+    remote.admin=local.admin;
+    remote.cloudUrl=url;
+    remote.cloud=Object.assign(local.cloud||{},remote.cloud||{},{
+      lastSyncAt:new Date().toISOString(),lastSyncResult:'load_ok'
+    });
+    saveState(remote);
+    setCloudStatus('✅ Google DB 데이터 불러오기 완료',true);
+    alert('Google DB에서 데이터를 불러왔습니다. 화면을 새로고침합니다.');
+    location.reload();
+    return true;
+  }catch(e){setCloudStatus('❌ DB 불러오기 실패: '+e.message,false);return false}
+}
+
+async function cloudRoundTripTest(){
+  let ok=await cloudHealthCheck();if(!ok)return;
+  setCloudStatus('왕복 테스트 1/2 · 저장 중...');
+  ok=await cloudPush();if(!ok)return;
+  setCloudStatus('왕복 테스트 2/2 · 저장 데이터 재확인 중...');
+  try{
+    let url=getCloudBaseUrl(),r=await jsonp(url+'?action=get&key=sosin70_v2_6&ts='+Date.now());
+    let p=r?.data?.drivers?.find(x=>x.name==='박철완');
+    if(!r?.ok||!p||String(p.empNo)!=='626023')throw new Error('박철완/626023 테스트 데이터 확인 실패');
+    setCloudStatus('✅ 왕복 테스트 성공 · 박철완 626023 데이터가 Google DB에서 확인되었습니다.',true);
+  }catch(e){setCloudStatus('❌ 왕복 테스트 실패: '+e.message,false)}
+}
+function runOnePersonSelfCheck(){
+  let s=state(),issues=[],p=s.drivers.find(x=>x.name==='박철완');
+  if(!p)issues.push('박철완 기사 마스터 없음');
+  else if(String(p.empNo)!=='626023')issues.push('박철완 사원번호가 626023이 아님');
+  if(!s.schedules['2026-08-19_B'])issues.push('8월19일 B조 테스트 배차 없음');
+  else{
+    let it=s.schedules['2026-08-19_B'].items.find(x=>x.driver==='박철완');
+    if(!it)issues.push('8월19일 박철완 배차 없음');
+  }
+  if(!s.driverAlerts)issues.push('기사 자동알림 설정 없음');
+  if(!Array.isArray(s.buses)||!s.buses.length)issues.push('차량 마스터 없음');
+  let el=document.getElementById('onePersonCheckResult');
+  if(issues.length){
+    el.className='db-status bad';el.innerHTML='❌ 점검 실패<br>'+issues.map(x=>'· '+esc(x)).join('<br>');
+  }else{
+    el.className='db-status ok';
+    el.innerHTML='✅ 1인 테스트 기본조건 정상<br>· 로그인: 박철완 / 626023<br>· 2026-08-19 B조 배차 데이터 존재<br>· 음성알림/운행기록/차량마스터 존재<br>이제 Google DB URL 연결 후 왕복 테스트를 진행할 수 있습니다.';
+  }
+}
+
 function exportData(){let blob=new Blob([JSON.stringify(state(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`70번_V2_백업_${isoToday()}.json`;a.click()}
 function importData(ev){let f=ev.target.files[0];if(!f)return;let rd=new FileReader();rd.onload=()=>{try{let j=JSON.parse(rd.result);saveState(j);alert('복원했습니다.');location.reload()}catch(e){alert('JSON 파일을 확인하세요.')}};rd.readAsText(f)}
 dispatchDate.value=logDate.value=isoToday();if(document.getElementById('rosterDate'))rosterDate.value=isoToday();updateDispatchDateBanner();
