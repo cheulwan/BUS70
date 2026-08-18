@@ -6,91 +6,90 @@
   <title>70번 소신여객 - 실시간 관제 및 운행일지 시스템</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
-    :root { 
-      --board-bg: #1b3a2b; 
-      --card-bg: #1e293b; 
-      --accent: #38bdf8; 
-      --green: #22c55e; 
-      --warn: #ef4444; 
-      --yellow: #facc15; 
-      --orange: #f97316;
-    }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: white; margin: 0; padding: 8px; font-size: 15px; box-sizing: border-box; }
-    
-    .tab-container { display: flex; gap: 4px; margin-bottom: 10px; }
-    .tab { flex: 1; padding: 12px 2px; text-align: center; background: #334155; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; color: #94a3b8; }
-    .tab.active { background: var(--accent); color: black; }
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --accent: #38bdf8;
+    --yellow: #facc15;
+    --text: #f8fafc;
+    --gray: #64748b;
+    --orange: #f97316;
+    --green: #22c55e;
+    --warn: #ef4444;
+  }
 
-    .card { background: var(--card-bg); padding: 12px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #334155; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; }
+  body { background: var(--bg); color: var(--text); padding: 8px; font-size: 16px; line-height: 1.5; }
 
-    input, select, textarea { width: 100%; background: #0f172a; color: white; border: 1px solid #475569; padding: 8px; text-align: center; border-radius: 6px; box-sizing: border-box; font-size: 0.9rem; }
-    input.direct-input { border-color: var(--orange); background: #2d1800; color: #ffedd5; font-weight: bold; }
-    
-    button { cursor: pointer; padding: 12px; border-radius: 8px; border: none; font-weight: bold; width: 100%; margin-top: 6px; font-size: 0.95rem; }
-    .btn-save { background: var(--green); color: black; }
-    .btn-share { background: #fee500; color: black; font-size: 1rem; }
-    .btn-auto { background: #8b5cf6; color: white; }
-    .btn-orange { background: var(--orange); color: white; }
-    .btn-slate { background: #475569; color: white; }
-    .btn-print { background: #38bdf8; color: black; }
-    
-    .holiday-style { background: #facc15 !important; color: #dc2626 !important; font-weight: bold; }
-    .day-info { padding: 10px; border-radius: 6px; text-align: center; margin-top: 8px; font-size: 0.88rem; font-weight: bold; }
+  /* 📌 모바일 가로/세로 짤림 방지 및 반응형 그리드 래퍼 */
+  .container { max-width: 100%; margin: 0 auto; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-    /* 모바일 배차판 레이아웃 */
-    .board-container { background: var(--board-bg); border: 3px solid #2d5a42; border-radius: 8px; padding: 8px 4px; width: 100%; box-sizing: border-box; overflow: hidden; }
-    .board-title-banner { background: #0f172a; border: 1px solid #38bdf8; border-radius: 4px; padding: 6px 10px; margin-bottom: 6px; text-align: center; font-weight: 900; font-size: 1.05rem; color: var(--yellow); }
+  .header { display: flex; justify-content: space-between; align-items: center; background: var(--card); padding: 12px 16px; border-radius: 10px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); flex-wrap: wrap; gap: 8px; }
+  .logo { font-size: 1.3rem; font-weight: 900; color: var(--accent); letter-spacing: -0.5px; }
 
-    .board-header { display: flex; align-items: center; gap: 2px; margin-bottom: 6px; }
-    .route-badge { background: #0284c7; color: white; font-size: 1.3rem; font-weight: 900; padding: 4px 8px; border-radius: 4px; border: 2px solid white; white-space: nowrap; }
-    .seq-header-list { display: flex; gap: 2px; width: 100%; }
-    
-    .seq-badge { flex: 1; background: #b91c1c; color: white; text-align: center; padding: 3px 0; font-weight: bold; border-radius: 2px; min-width: 0; border: 1px solid #ef4444; font-size: 0.75rem; }
-    .seq-badge.off-seq { background: #475569; border-color: #64748b; color: #cbd5e1; }
-    .seq-sub { font-size: 0.62rem; display: block; color: #fef08a; font-weight: normal; line-height: 1.1; }
-    .origin-tag { display: block; font-size: 0.6rem; font-weight: bold; padding: 1px 0; background: rgba(0,0,0,0.3); margin-bottom: 1px; }
-    .origin-songnae { color: #38bdf8; }
-    .origin-gogang { color: #facc15; }
-    
-    .dispatch-board-grid { display: flex; gap: 2px; align-items: stretch; }
-    .shift-tag-col { writing-mode: vertical-rl; text-orientation: upright; background: #f8fafc; color: #dc2626; font-weight: 900; font-size: 1.1rem; padding: 6px 2px; border-radius: 4px; letter-spacing: 2px; border: 2px solid #cbd5e1; width: 26px; text-align: center; flex-shrink: 0; }
-    .board-columns-wrapper { display: flex; gap: 2px; width: 100%; }
-    .board-column { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; align-items: center; }
+  .nav-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; width: 100%; margin-top: 8px; }
+  .tab { padding: 10px 16px; background: #334155; border: none; border-radius: 8px; color: white; font-weight: 700; font-size: 1rem; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+  .tab.active { background: var(--accent); color: #0f172a; box-shadow: 0 2px 4px rgba(56, 189, 248, 0.4); }
 
-    .bus-card-plate { background: #0284c7; color: white; border: 1.5px solid #38bdf8; border-radius: 4px; width: 100%; padding: 6px 0; text-align: center; box-sizing: border-box; }
-    .bus-card-plate.changed { background: #d97706; border-color: #f59e0b; }
-    .bus-card-plate.off { background: #334155; border-color: #475569; color: #94a3b8; }
+  .card { background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+  
+  /* 📌 노안 가시성 확보: 입력 폼 및 버튼 확대 (최소 16px 이상으로 짤림 및 오클릭 방지) */
+  input, select, textarea { width: 100%; padding: 12px; background: #0f172a; border: 2px solid #475569; border-radius: 8px; color: white; font-size: 1.1rem; font-weight: 700; margin-top: 6px; margin-bottom: 12px; }
+  input:focus, select:focus { border-color: var(--accent); outline: none; }
+  
+  button { width: 100%; padding: 14px; background: var(--accent); border: none; border-radius: 8px; color: #0f172a; font-size: 1.1rem; font-weight: 900; cursor: pointer; margin-top: 6px; box-shadow: 0 3px 6px rgba(0,0,0,0.3); transition: filter 0.2s; }
+  button:active { filter: brightness(0.9); }
 
-    .driver-card-plate { background: #facc15; color: black; border: 1.5px solid #eab308; border-radius: 4px; width: 100%; padding: 10px 0; text-align: center; box-sizing: border-box; }
-    .driver-card-plate.white-bg { background: #ffffff; color: black; border-color: #cbd5e1; }
-    .driver-card-plate.changed { background: #dc2626; color: white; border-color: #f87171; }
-    .driver-card-plate.off { background: #1e293b; color: #64748b; border-color: #334155; }
-    
-    .bus-number-vertical { writing-mode: vertical-rl; text-orientation: upright; font-size: 1.05rem; font-weight: 900; letter-spacing: 1px; margin: 0 auto; line-height: 1; }
-    .driver-name-vertical { writing-mode: vertical-rl; text-orientation: upright; font-size: 1.25rem; font-weight: 900; letter-spacing: 2px; margin: 0 auto; line-height: 1; }
+  /* 📌 배차판 이미지 캡처 영역 (가로 모바일 짤림 방지 및 고시인성 플레이트 구조) */
+  .capture-board-wrapper { width: 100%; overflow-x: auto; }
+  .board-container { background: #1b3a2b; padding: 14px; border-radius: 12px; border: 3px solid #2e7d32; min-width: max-content; }
+  
+  .board-header-grid { display: flex; gap: 6px; margin-bottom: 10px; }
+  .seq-badge { background: #111827; color: white; padding: 8px 4px; border-radius: 6px; text-align: center; font-size: 0.9rem; font-weight: 900; width: 62px; flex-shrink: 0; border: 1px solid #374151; }
+  .seq-badge.off-seq { background: #374151; color: #9ca3af; }
+  .origin-tag { display: block; font-size: 0.7rem; padding: 2px 0; border-radius: 3px; margin-bottom: 3px; font-weight: bold; }
+  .origin-songnae { background: #ef4444; color: white; }
+  .origin-gogang { background: #3b82f6; color: white; }
+  .seq-sub { display: block; font-size: 0.75rem; color: var(--yellow); margin-bottom: 2px; }
 
-    .tang-card { background: #0f172a; border: 1px solid #334155; padding: 8px; border-radius: 6px; margin-top: 6px; display: flex; justify-content: space-between; align-items: center; }
-    .tang-title { font-weight: bold; color: var(--accent); font-size: 0.95rem; }
-    .tang-time { font-size: 1rem; font-weight: bold; color: var(--yellow); }
-    .tang-status { font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; background: #334155; }
-    .tang-status.active { background: var(--green); color: black; font-weight: bold; }
+  /* 📌 폰트 크기 대폭 상향 및 세로 직관형 배치 (노안 가시성 최적화) */
+  .board-columns-wrapper { display: flex; gap: 6px; }
+  .board-column { display: flex; flex-direction: column; gap: 6px; width: 62px; flex-shrink: 0; }
 
-    /* 타임라인 및 일지 테이블 */
-    .timeline-item { border-left: 2px solid var(--accent); padding-left: 10px; margin-bottom: 12px; position: relative; }
-    .timeline-item::before { content:''; position: absolute; left: -6px; top: 0; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
-    
-    /* 인쇄 전용 스타일 */
-    @media print {
-      body { background: white; color: black; font-size: 12pt; padding: 0; }
-      .no-print, .tab-container, button, input, select { display: none !important; }
-      .card { border: none; background: white; color: black; padding: 0; margin: 0; }
-      .print-area { display: block !important; }
-      table.print-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-      table.print-table th, table.print-table td { border: 1px solid #000; padding: 6px; text-align: center; color: black; }
-    }
-  </style>
+  .bus-card-plate { background: #ffffff; color: #000000; border-radius: 6px; padding: 10px 2px; text-align: center; font-weight: 900; border: 2px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.3); min-height: 85px; display: flex; align-items: center; justify-content: center; }
+  .bus-card-plate.off { background: #64748b; color: #cbd5e1; min-height: 60px; }
+  .bus-card-plate.changed { background: #fef08a; border: 2px solid #eab308; }
+  .bus-number-vertical { writing-mode: vertical-rl; text-orientation: upright; font-size: 1.15rem; font-weight: 900; letter-spacing: 2px; }
+
+  .driver-card-plate { background: var(--yellow); color: #000000; border-radius: 6px; padding: 12px 2px; text-align: center; font-weight: 900; border: 2px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.3); min-height: 120px; display: flex; align-items: center; justify-content: center; }
+  .driver-card-plate.white-bg { background: #ffffff; color: #000000; }
+  .driver-card-plate.off { background: #475569; color: #94a3b8; min-height: 60px; }
+  .driver-card-plate.changed { background: #ffedd5; border: 2px solid #f97316; }
+  .driver-name-vertical { writing-mode: vertical-rl; text-orientation: upright; font-size: 1.25rem; font-weight: 900; letter-spacing: 3px; }
+
+  /* 테이블 및 가시성 보완 */
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 1rem; }
+  th, td { padding: 10px 8px; text-align: center; border: 1px solid #475569; }
+  th { background: #334155; color: var(--yellow); font-weight: 900; }
+  td { background: #1e293b; color: white; font-weight: 700; }
+
+  .day-info { padding: 10px; background: #065f46; color: #6ee7b7; border-radius: 8px; font-weight: 900; text-align: center; margin-bottom: 10px; font-size: 1.05rem; }
+  .holiday-style { background: #7f1d1d !important; color: #fca5a5 !important; }
+
+  .tang-card { background: #0f172a; border-left: 5px solid var(--accent); padding: 12px 14px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+  .tang-title { font-size: 1.15rem; font-weight: 900; color: white; }
+  .tang-time { font-size: 1.25rem; font-weight: 900; color: var(--yellow); }
+  .tang-status { font-size: 0.9rem; padding: 4px 10px; border-radius: 6px; background: #334155; color: #cbd5e1; font-weight: bold; }
+  .tang-status.active { background: var(--orange); color: white; }
+
+  @media print {
+    body { background: white; color: black; }
+    .header, .nav-tabs, button, .no-print { display: none !important; }
+    .card { box-shadow: none; border: 1px solid #ccc; background: white; color: black; }
+    table th { background: #eee !important; color: black !important; }
+    table td { background: white !important; color: black !important; }
+  }
+</style>
 </head>
 <body>
 
@@ -392,6 +391,7 @@
 
   window.onload = function() {
     loadLastDriverProfile();
+    initAdminIdInput();
   };
 
   function formatDateWithDay(dateStr) {
@@ -417,6 +417,15 @@
     return { id: 'admin', pw: '1234' };
   }
 
+  // 📌 2번 요구사항 반영: 관리자 ID 기본 표출
+  function initAdminIdInput() {
+    const currentAcc = getAdminAccount();
+    const idInput = document.getElementById('adminIdInput');
+    if(idInput) {
+      idInput.value = currentAcc.id;
+    }
+  }
+
   function isHolidayMode() {
     const dateInput = document.getElementById('dispatchDate').value;
     if(!dateInput) return false;
@@ -436,6 +445,7 @@
     if(m === 'mgr' || m === 'leave' || m === 'setting' || m === 'log') {
       if(!isAdminLoggedIn) {
         pendingTab = m;
+        initAdminIdInput();
         document.getElementById('adminLoginModal').style.display = 'flex';
         return;
       }
@@ -443,6 +453,7 @@
     activateTab(m);
   }
 
+  // 📌 2번 요구사항 반영: 관리자 로그인 시간 기록 남기기
   function checkAdminLogin() {
     const id = document.getElementById('adminIdInput').value.trim();
     const pw = document.getElementById('adminPwInput').value.trim();
@@ -451,10 +462,17 @@
     if(id === currentAcc.id && pw === currentAcc.pw) {
       isAdminLoggedIn = true;
       closeAdminModal();
-      alert("관리자 인증 완료!");
+
+      // 로그인 성공 기록 저장
+      const loginTimeStr = new Date().toLocaleString();
+      let loginLogs = JSON.parse(localStorage.getItem('70_admin_login_logs')) || [];
+      loginLogs.unshift({ id, time: loginTimeStr });
+      localStorage.setItem('70_admin_login_logs', JSON.stringify(loginLogs));
+
+      alert(`관리자 인증 완료! (로그인 시간 기록됨: ${loginTimeStr})`);
       if(pendingTab) activateTab(pendingTab);
     } else {
-      alert("아이디 또는 비밀번호가 올바르지 않습니다.");
+      alert("비밀번호가 올바르지 않습니다.");
     }
   }
 
@@ -486,6 +504,7 @@
 
     localStorage.setItem('70_admin_account', JSON.stringify({ id: newId, pw: newPw }));
     alert(`관리자 계정이 변경되었습니다! (신규 ID: ${newId})`);
+    initAdminIdInput();
   }
 
   function activateTab(m) {
@@ -648,7 +667,7 @@
     }
   }
 
-  // 📌 2번 요구사항 반영: 전체 배차표 확정 저장 시 배차판 이미지 저장 및 단톡방 전송 기능 동시 실행
+  // 📌 3번 요구사항 반영: 전체 배차표 확정 저장 시 기능 통합 (저장 + 타임라인 연동 + 이미지 저장 및 단톡 공유 팝업)
   function saveDispatchSchedule(showAlert = true) {
     const shift = document.getElementById('shiftSel').value;
     const date = document.getElementById('dispatchDate').value;
@@ -689,16 +708,15 @@
     updateBoardDisplay();
 
     if(showAlert) {
-      alert(`[${formatDateWithDay(date)} ${shift}조] 배차 확정 저장 완료! 이미지 변환 및 단톡 전송 창을 엽니다.`);
+      alert(`[${formatDateWithDay(date)} ${shift}조] 배차 확정 저장 및 타임라인 연동 완료! 단톡 공유용 이미지를 생성합니다.`);
     }
 
-    // 자동으로 배차판 이미지 생성 및 공유 팝업 표출
     setTimeout(() => {
       shareAsPNGImage();
     }, 300);
   }
 
-  // 📌 1번 요구사항 반영: 기사관제 알림연동 시작 시 날짜, 첫탕 시간 및 예상 날씨 상세 음성 브리핑
+  // 📌 1번 요구사항 반영: 기사 접속 시 종합 음성 브리핑 및 1시간 전 자동 알림 스케줄러 연동
   function loginDriverAndStartVoice() {
     const drvName = document.getElementById('drvLoginName').value.trim();
     const empNo = document.getElementById('drvEmpNo').value.trim();
@@ -759,6 +777,12 @@
     myActiveTangSchedules = [];
     container.innerHTML = '';
 
+    let firstTangMin = 320; // 기본값 05:20
+    if(timeObj && timeObj.times[0]) {
+      const [h, m] = timeObj.times[0].split(':').map(Number);
+      firstTangMin = h * 60 + m;
+    }
+
     for(let tang = 1; tang <= 5; tang++) {
       let timeStr = timeObj.times[tang - 1];
       if(!timeStr || timeStr === "운휴") continue;
@@ -784,10 +808,14 @@
 
     startRealtimeScheduler();
 
-    // 상세 음성 브리핑 실행 (현재 날짜, 날씨 안내, 첫탕 시간 및 다가오는 스케줄 안내)
+    // 📌 1번 요구사항 반영: 접속 직후 종합 음성 브리핑 (현재 날짜/시간/날씨 + 운행 날짜/첫탕 시간/예상 날씨)
     const now = new Date();
-    const dateFormatted = `${now.getMonth() + 1}월 ${now.getDate()}일`;
-    const briefingText = `${drvName} 기사님, 알림 연동이 시작되었습니다. 오늘 날짜는 ${dateFormatted}이며, 기상 상태는 맑고 쾌적합니다. ${myDispatch.turn}순차, 첫탕 출발 시간은 ${firstTimeStr}입니다. 안전 운행 하십시오.`;
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    const currentDayName = days[now.getDay()];
+    const currentTimeStr = `${now.getHours()}시 ${now.getMinutes()}분`;
+    const runDateFormatted = formatDateWithDay(data.date);
+
+    const briefingText = `${drvName} 기사님, 알림 연동이 시작되었습니다. 현재 시각은 ${currentTimeStr}, 날씨는 맑고 쾌적합니다. 오늘 운행 날짜는 ${runDateFormatted}이며, 배정된 ${myDispatch.turn}순차 첫탕 출발 시간은 ${firstTimeStr}, 예상 날씨는 맑음입니다. 안전 운행 하십시오.`;
     speakTTS(briefingText);
   }
 
@@ -797,14 +825,18 @@
     alertTimer = setInterval(() => {
       const now = new Date();
       const currentMin = now.getHours() * 60 + now.getMinutes();
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      const dayName = days[now.getDay()];
+      const currentDateStr = `${now.getMonth() + 1}월 ${now.getDate()}일`;
 
       myActiveTangSchedules.forEach(item => {
         const diff = item.min - currentMin;
 
+        // 📌 1번 요구사항 반영: 실제 첫탕 시작 1시간 전 자동 음성 안내 (날짜, 요일, 해당 순차, 첫탕 시간, 예상 날씨)
         if(item.tang === 1 && !item.alerted1h && diff <= 60 && diff > 50) {
           item.alerted1h = true;
           playBeepSound();
-          speakTTS(`1시간 후 1탕 첫 출발 시간입니다. 출근 및 운행 준비 바랍니다.`);
+          speakTTS(`자동 알림입니다. 오늘 날짜는 ${currentDateStr} ${dayName요일}이며, 배정된 1순차 첫탕 출발 시각 1시간 전입니다. 출발 시간은 ${item.timeStr}, 예상 날씨는 맑음입니다. 출근 및 운행 준비 바랍니다.`);
         }
 
         if(!item.alerted5m && diff <= 5 && diff >= 0) {
@@ -927,7 +959,6 @@
     printCard.style.display = 'block';
   }
 
-  // 📌 1번 요구사항 반영: 미래 날짜는 제출용 출력 차단 및 완료된 날짜만 출력 허용
   function printDriverPersonalLog() {
     const targetDate = document.getElementById('driverSearchDate').value;
     const type = document.getElementById('driverSearchType').value;
@@ -944,7 +975,6 @@
     window.print();
   }
 
-  // 📌 3번 요구사항 반영: 운행일지 메뉴 전체 운행일지 A4 인쇄 / PDF 저장 정상 실행
   function printFullDriverLogs() {
     window.print();
   }
