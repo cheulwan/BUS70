@@ -4,7 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07131f">
-<title>소신여객 70번 운행관리 V2.6.1</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BUS70">
+
+<title>소신여객 70번 운행관리 V2.7</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{
@@ -91,6 +97,14 @@ label{display:block;color:var(--muted);font-size:.74rem;margin:0 0 4px}.btn{widt
 .share-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}
 @media(max-width:520px){.share-actions{grid-template-columns:1fr}}
 
+
+.pwa-panel{background:#0a1c2b;border:2px solid #2f7aa6;border-radius:14px;padding:12px;margin:9px 0}
+.pwa-status{border-radius:10px;padding:9px;margin-top:8px;background:#091724;border:1px solid #37556f;font-size:.78rem;line-height:1.5}
+.pwa-status.ok{border-color:#2d8a68;color:#bbf7d0}
+.pwa-status.warn{border-color:#9a7124;color:#fde68a}
+.pwa-status.bad{border-color:#a44c58;color:#fecaca}
+.install-banner{display:none;background:#112b3d;border:1px solid #2f7aa6;border-radius:12px;padding:10px;margin:8px 0}
+
 @media(max-width:680px){.project-grid{grid-template-columns:1fr}.master-summary{grid-template-columns:repeat(2,1fr)}}
 
 @media(max-width:680px){.app{padding:7px}.grid2,.grid3{grid-template-columns:1fr}.tabs{gap:3px}.tab{padding:10px 8px;font-size:.78rem}.hero .big{font-size:2rem}.board{overflow-x:auto}.boardrow{min-width:760px}.kpis{grid-template-columns:repeat(3,1fr)}.times{grid-template-columns:repeat(3,1fr)}}
@@ -101,8 +115,12 @@ label{display:block;color:var(--muted);font-size:.74rem;margin:0 0 4px}.btn{widt
 </head>
 <body>
 <div class="app">
-  <div class="top no-print"><div class="brand">🚌 소신여객 70번 운행관리 V2.6.1</div><div class="role" id="roleLabel">미로그인</div></div>
-  <div class="tabs no-print" id="tabs">
+  <div class="top no-print"><div class="brand">🚌 소신여객 70번 운행관리 V2.7</div><div class="role" id="roleLabel">미로그인</div></div>
+  <div id="installBanner" class="install-banner no-print">
+  <b>📲 BUS70을 홈 화면에 설치할 수 있습니다.</b>
+  <button class="btn blue" style="margin-top:7px" onclick="installPwa()">앱처럼 설치</button>
+</div>
+<div class="tabs no-print" id="tabs">
     <button class="tab active" data-view="today">오늘 운행</button>
     <button class="tab" data-view="project">개발 현황</button>
     <button class="tab" data-view="roster">A/B조 명단</button>
@@ -167,9 +185,25 @@ label{display:block;color:var(--muted);font-size:.74rem;margin:0 0 4px}.btn{widt
         <div class="project-item"><span class="num">7</span><b>개인·전체 운행일지</b><br><span class="state ready">조회/인쇄 기본 구현</span></div>
         <div class="project-item"><span class="num">8</span><b>휴가·병가·대타·예비차</b><br><span class="state partial">기본 관리 구현 · 자동 추천 고도화 예정</span></div>
         <div class="project-item"><span class="num">9</span><b>현장형 배차판 PNG/카카오톡 공유</b><br><span class="state ready">구현</span></div>
-        <div class="project-item"><span class="num">10</span><b>PC·모바일 세로/가로 반응형</b><br><span class="state partial">기본 대응 · 실기기 검증 필요</span></div>
+        <div class="project-item"><span class="num">10</span><b>PC·모바일 세로/가로 반응형</b><br><span class="state partial">PWA/Service Worker 추가 · 실기기 검증 필요</span></div>
         <div class="project-item"><span class="num">11</span><b>중앙 DB 연결</b><br><span class="state partial">Google Apps Script 연결·왕복 테스트 기능 구현</span></div>
       </div>
+    </div>
+
+    
+    <div class="pwa-panel no-print">
+      <h3 style="margin-top:0">📱 GitHub Pages / PWA 모바일 테스트</h3>
+      <div class="test-step"><b>1</b> GitHub Pages HTTPS에서 열기</div>
+      <div class="test-step"><b>2</b> Service Worker 등록 확인</div>
+      <div class="test-step"><b>3</b> 알림 권한 요청 → 테스트 알림</div>
+      <div class="test-step"><b>4</b> 홈 화면에 BUS70 설치</div>
+      <div class="grid3">
+        <button class="btn blue" style="margin:0" onclick="checkPwaStatus()">상태 확인</button>
+        <button class="btn green" style="margin:0" onclick="enablePwaNotifications()">알림 사용 시작</button>
+        <button class="btn yellow" style="margin:0" onclick="sendPwaTestNotification()">테스트 알림</button>
+      </div>
+      <button class="btn slate" onclick="installPwa()">📲 홈 화면에 BUS70 설치</button>
+      <div id="pwaStatus" class="pwa-status">PWA 상태를 확인하세요.</div>
     </div>
 
     <div class="test-panel no-print">
@@ -320,7 +354,7 @@ label{display:block;color:var(--muted);font-size:.74rem;margin:0 0 4px}.btn{widt
 <script>
 const WEEKDAY = {"1": [["", "05:20", "06:30"], ["07:25", "09:05", "10:45"], ["11:20", "12:50", "14:22"], ["15:00", "16:38", "18:15"], ["19:00", "20:30", "22:00"]], "2": [["", "05:40", "06:55"], ["07:45", "09:25", "11:05"], ["11:40", "13:10", "14:42"], ["15:21", "17:02", "18:40"], ["19:22", "20:45", "22:09"]], "3": [["04:50", "06:05", "07:25"], ["08:05", "09:45", "11:25"], ["12:00", "13:30", "15:02"], ["15:42", "17:22", "19:05"], ["19:44", "21:06", "22:28"]], "4": [["05:05", "06:25", "07:45"], ["08:25", "10:05", "11:45"], ["12:20", "13:50", "15:22"], ["16:04", "17:43", "19:30"], ["20:06", "21:26", "22:46"]], "5": [["05:20", "06:45", "08:10"], ["08:50", "10:25", "12:02"], ["12:40", "14:10", "15:42"], ["16:26", "18:08", "19:58"], ["20:28", "21:46", "23:05"]], "6": [["05:36", "07:04", "08:32"], ["09:15", "10:50", "12:25"], ["13:00", "14:30", "16:02"], ["16:48", "18:32", "20:22"], ["20:50", "22:05", "23:20"]], "7": [["05:52", "07:22", "08:52"], ["09:40", "11:13", "12:45"], ["13:20", "14:50", "16:24"], ["17:10", "18:48", "20:40"], ["21:15", "22:30", "23:45"]], "8": [["06:08", "07:40", "09:11"], ["10:00", "11:32", "13:05"], ["13:40", "15:10", "16:42"], ["17:32", "19:13", "21:00"], ["21:40", "22:55", "00:10"]], "9": [["06:25", "08:03", "09:40"], ["10:20", "11:52", "13:24"], ["14:00", "15:35", "17:11"], ["17:54", "19:34", "21:24"], ["22:05", "23:20", "00:30"]], "10": [["06:45", "08:23", "10:00"], ["10:40", "12:10", "13:42"], ["14:20", "15:55", "17:31"], ["18:16", "19:55", "21:35"], ["22:30", "23:45", "00:55"]], "11": [["07:05", "08:45", "10:25"], ["11:00", "12:30", "14:02"], ["14:40", "16:15", "17:50"], ["18:38", "20:10", "21:42"], ["22:50", "00:05", "01:15"]]};
 const HOLIDAY = {"1": [["", "05:20", "06:30"], ["07:20", "08:50", "10:20"], ["11:20", "12:55", "14:30"], ["15:20", "17:00", "18:40"], ["19:20", "20:45", "22:10"]], "2": [["", "05:40", "06:55"], ["07:50", "09:20", "10:50"], ["11:50", "13:25", "15:00"], ["15:50", "17:25", "19:00"], ["19:50", "21:13", "22:36"]], "3": [["04:50", "06:05", "07:20"], ["08:20", "09:50", "11:20"], ["12:20", "13:55", "15:30"], ["16:20", "17:50", "19:20"], ["20:20", "21:43", "23:06"]], "4": [["05:15", "06:30", "07:50"], ["08:50", "10:20", "11:50"], ["12:50", "14:25", "16:00"], ["16:50", "18:20", "19:50"], ["20:50", "22:13", "23:36"]], "5": [["05:40", "06:58", "08:20"], ["09:20", "10:50", "12:20"], ["13:20", "14:55", "16:30"], ["17:20", "18:50", "20:20"], ["21:20", "22:40", "00:00"]], "6": [["06:05", "07:20", "08:50"], ["09:50", "11:25", "13:00"], ["13:50", "15:30", "17:10"], ["17:50", "19:20", "20:50"], ["21:50", "23:05", "00:20"]], "7": [["06:30", "07:50", "09:20"], ["10:20", "11:55", "13:30"], ["14:20", "16:00", "17:40"], ["18:20", "19:50", "21:20"], ["22:20", "23:34", "00:48"]], "8": [["06:55", "08:20", "09:50"], ["10:50", "12:25", "14:00"], ["14:50", "16:30", "18:10"], ["18:50", "20:20", "21:50"], ["22:50", "00:05", "01:15"]]};
-const KEY='sosin70_v2_6_1_state';
+const KEY='sosin70_v2_7_state';
 let role=null,currentDriver=null,voiceTimer=null;
 
 const seed={"admin":{"id":"admin","pw":"1234"},"drivers":[{"name":"홍선준","empNo":"","shift":"A","seq":7,"bus":"1499","role":"정규"},{"name":"여승철","empNo":"","shift":"A","seq":8,"bus":"1503","role":"정규"},{"name":"문상식","empNo":"","shift":"A","seq":9,"bus":"1504","role":"정규"},{"name":"변종원","empNo":"","shift":"A","seq":10,"bus":"1505","role":"정규"},{"name":"서성덕","empNo":"","shift":"A","seq":11,"bus":"1506","role":"정규"},{"name":"최광로","empNo":"","shift":"A","seq":1,"bus":"1507","role":"정규"},{"name":"김육","empNo":"","shift":"A","seq":2,"bus":"1508","role":"정규"},{"name":"신경용","empNo":"","shift":"A","seq":3,"bus":"1608","role":"정규"},{"name":"김민석","empNo":"","shift":"A","seq":4,"bus":"1609","role":"정규"},{"name":"김동석","empNo":"","shift":"A","seq":5,"bus":"1610","role":"정규"},{"name":"안준호","empNo":"","shift":"A","seq":6,"bus":"1622","role":"정규"},{"name":"박철완","empNo":"626023","shift":"B","seq":7,"bus":"1499","role":"정규"},{"name":"박영민","empNo":"","shift":"B","seq":8,"bus":"1503","role":"정규"},{"name":"박현우","empNo":"","shift":"B","seq":9,"bus":"1504","role":"정규"},{"name":"한성혁","empNo":"","shift":"B","seq":10,"bus":"1505","role":"정규"},{"name":"최일규","empNo":"","shift":"B","seq":11,"bus":"1506","role":"정규"},{"name":"김호","empNo":"","shift":"B","seq":1,"bus":"1507","role":"정규"},{"name":"권경율","empNo":"","shift":"B","seq":2,"bus":"1508","role":"정규"},{"name":"박영기","empNo":"","shift":"B","seq":3,"bus":"1608","role":"정규"},{"name":"유재웅","empNo":"","shift":"B","seq":4,"bus":"1609","role":"정규"},{"name":"천승준","empNo":"","shift":"B","seq":5,"bus":"1610","role":"정규"},{"name":"이응주","empNo":"","shift":"","seq":6,"bus":"1622","role":"대타","note":"70번 대타 기사"},{"name":"이기삼","empNo":"","shift":"","seq":7,"bus":"1504","role":"대타","note":"2026-08-31까지 5번/70번 대타, 2026-09-01부터 75번 이동 예정"},{"name":"강호익","empNo":"","shift":"","seq":3,"bus":"1610","role":"대타","note":"70번 대타 기사"},{"name":"이재천","empNo":"","shift":"B","seq":6,"bus":"1622","role":"정규","note":"2026년 8월 병가"}],"buses":["1499","1503","1504","1505","1506","1507","1508","1608","1609","1610","1622","예비1601"],"holidays":[],"voice":{"enabled":true,"leads":[15,5,1]},"cloudUrl":"","leaves":[{"id":2026081701,"driver":"박철완","type":"휴가","start":"2026-08-17","end":"2026-08-17","reason":"현장 자료"},{"id":2026081702,"driver":"박영민","type":"휴가","start":"2026-08-17","end":"2026-08-17","reason":"현장 자료"},{"id":2026081703,"driver":"천승준","type":"휴가","start":"2026-08-17","end":"2026-08-17","reason":"현장 자료"},{"id":2026081704,"driver":"한성혁","type":"휴가","start":"2026-08-17","end":"2026-08-17","reason":"현장 자료"},{"id":2026080101,"driver":"이재천","type":"병가","start":"2026-08-01","end":"2026-08-31","reason":"8월 한 달 병가"}],"rotationSteps":2,"schedules":{"2026-08-17_B":{"date":"2026-08-17","shift":"B","isHoliday":true,"items":[{"seq":5,"driver":"최일규","bus":"1506"},{"seq":6,"driver":"김호","bus":"1507"},{"seq":7,"driver":"이기삼","bus":"1504"},{"seq":8,"driver":"권경율","bus":"1508"},{"seq":1,"driver":"박영기","bus":"1608"},{"seq":2,"driver":"유재웅","bus":"1609"},{"seq":3,"driver":"강호익","bus":"1610"},{"seq":4,"driver":"박현우","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-18_A":{"date":"2026-08-18","shift":"A","isHoliday":false,"items":[{"seq":7,"driver":"홍선준","bus":"1499"},{"seq":8,"driver":"여승철","bus":"1503"},{"seq":9,"driver":"문상식","bus":"1504"},{"seq":10,"driver":"변종원","bus":"1505"},{"seq":11,"driver":"서성덕","bus":"1506"},{"seq":1,"driver":"최광로","bus":"1507"},{"seq":2,"driver":"김육","bus":"1508"},{"seq":3,"driver":"신경용","bus":"1608"},{"seq":4,"driver":"김민석","bus":"1609"},{"seq":5,"driver":"김동석","bus":"1610"},{"seq":6,"driver":"안준호","bus":"1622"}],"source":"8월18일 A조 현장 상황판 참고"},"2026-08-19_B":{"date":"2026-08-19","shift":"B","isHoliday":false,"items":[{"seq":7,"driver":"박철완","bus":"1499"},{"seq":8,"driver":"박영민","bus":"1503"},{"seq":9,"driver":"박현우","bus":"1504"},{"seq":10,"driver":"한성혁","bus":"1505"},{"seq":11,"driver":"최일규","bus":"1506"},{"seq":1,"driver":"김호","bus":"1507"},{"seq":2,"driver":"권경율","bus":"1508"},{"seq":3,"driver":"박영기","bus":"1608"},{"seq":4,"driver":"유재웅","bus":"1609"},{"seq":5,"driver":"천승준","bus":"1610"},{"seq":6,"driver":"이응주","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-01_B":{"date":"2026-08-01","shift":"B","isHoliday":true,"items":[{"seq":1,"driver":"박영민","bus":"1503"},{"seq":2,"driver":"강호익","bus":"1504"},{"seq":3,"driver":"한성혁","bus":"1505"},{"seq":4,"driver":"최일규","bus":"1506"},{"seq":5,"driver":"김호","bus":"1507"},{"seq":6,"driver":"박현우","bus":"1508"},{"seq":7,"driver":"이응주","bus":"1622"},{"seq":8,"driver":"유재웅","bus":"1609"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-03_B":{"date":"2026-08-03","shift":"B","isHoliday":false,"items":[{"seq":2,"driver":"박철완","bus":"1499"},{"seq":3,"driver":"박영민","bus":"1503"},{"seq":4,"driver":"강호익","bus":"1504"},{"seq":5,"driver":"한성혁","bus":"1505"},{"seq":6,"driver":"최일규","bus":"1506"},{"seq":7,"driver":"김호","bus":"1507"},{"seq":8,"driver":"권경율","bus":"1508"},{"seq":9,"driver":"박영기","bus":"1608"},{"seq":10,"driver":"유재웅","bus":"1609"},{"seq":11,"driver":"천승준","bus":"1610"},{"seq":1,"driver":"이응주","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-05_B":{"date":"2026-08-05","shift":"B","isHoliday":false,"items":[{"seq":4,"driver":"박철완","bus":"1499"},{"seq":5,"driver":"박영민","bus":"1503"},{"seq":6,"driver":"강호익","bus":"1504"},{"seq":7,"driver":"한성혁","bus":"1505"},{"seq":8,"driver":"최일규","bus":"1506"},{"seq":9,"driver":"김호","bus":"1507"},{"seq":10,"driver":"권경율","bus":"1508"},{"seq":11,"driver":"박영기","bus":"1608"},{"seq":1,"driver":"유재웅","bus":"1609"},{"seq":2,"driver":"천승준","bus":"1610"},{"seq":3,"driver":"박현우","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-07_B":{"date":"2026-08-07","shift":"B","isHoliday":false,"items":[{"seq":6,"driver":"박철완","bus":"1499"},{"seq":7,"driver":"박영민","bus":"1503"},{"seq":8,"driver":"박현우","bus":"1504"},{"seq":9,"driver":"한성혁","bus":"1505"},{"seq":10,"driver":"최일규","bus":"1506"},{"seq":11,"driver":"강호익","bus":"1507"},{"seq":1,"driver":"권경율","bus":"1508"},{"seq":2,"driver":"박영기","bus":"1608"},{"seq":3,"driver":"유재웅","bus":"1609"},{"seq":4,"driver":"천승준","bus":"1610"},{"seq":5,"driver":"이응주","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-11_B":{"date":"2026-08-11","shift":"B","isHoliday":false,"items":[{"seq":10,"driver":"박철완","bus":"1499"},{"seq":11,"driver":"박영민","bus":"1503"},{"seq":1,"driver":"이기삼","bus":"1504"},{"seq":2,"driver":"한성혁","bus":"1505"},{"seq":3,"driver":"강호익","bus":"1506"},{"seq":4,"driver":"김호","bus":"1507"},{"seq":5,"driver":"권경율","bus":"1508"},{"seq":6,"driver":"박영기","bus":"1608"},{"seq":7,"driver":"유재웅","bus":"1609"},{"seq":8,"driver":"천승준","bus":"1610"},{"seq":9,"driver":"박현우","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-13_B":{"date":"2026-08-13","shift":"B","isHoliday":false,"items":[{"seq":1,"driver":"박철완","bus":"1499"},{"seq":2,"driver":"박영민","bus":"1503"},{"seq":3,"driver":"박현우","bus":"1504"},{"seq":4,"driver":"강호익","bus":"1505"},{"seq":5,"driver":"최일규","bus":"1506"},{"seq":6,"driver":"김호","bus":"1507"},{"seq":7,"driver":"권경율","bus":"1508"},{"seq":8,"driver":"박영기","bus":"1608"},{"seq":9,"driver":"유재웅","bus":"1609"},{"seq":10,"driver":"천승준","bus":"1610"},{"seq":11,"driver":"이응주","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"},"2026-08-15_B":{"date":"2026-08-15","shift":"B","isHoliday":true,"items":[{"seq":3,"driver":"박철완","bus":"1499"},{"seq":4,"driver":"박영민","bus":"1503"},{"seq":5,"driver":"이기삼","bus":"1504"},{"seq":6,"driver":"한성혁","bus":"1505"},{"seq":7,"driver":"권경율","bus":"1508"},{"seq":8,"driver":"강호익","bus":"1507"},{"seq":1,"driver":"천승준","bus":"1610"},{"seq":2,"driver":"이응주","bus":"1622"}],"source":"2026년 8월 B조 현장 상황판 사진"}},"runLogs":{},"rotation":{"anchorDate":"2026-08-18","anchorShift":"A","step":2,"anchors":{"A":{"date":"2026-08-18","items":[{"seq":7,"driver":"홍선준","bus":"1499"},{"seq":8,"driver":"여승철","bus":"1503"},{"seq":9,"driver":"문상식","bus":"1504"},{"seq":10,"driver":"변종원","bus":"1505"},{"seq":11,"driver":"서성덕","bus":"1506"},{"seq":1,"driver":"최광로","bus":"1507"},{"seq":2,"driver":"김육","bus":"1508"},{"seq":3,"driver":"신경용","bus":"1608"},{"seq":4,"driver":"김민석","bus":"1609"},{"seq":5,"driver":"김동석","bus":"1610"},{"seq":6,"driver":"안준호","bus":"1622"}]},"B":{"date":"2026-08-19","items":[{"seq":7,"driver":"박철완","bus":"1499"},{"seq":8,"driver":"박영민","bus":"1503"},{"seq":9,"driver":"박현우","bus":"1504"},{"seq":10,"driver":"한성혁","bus":"1505"},{"seq":11,"driver":"최일규","bus":"1506"},{"seq":1,"driver":"김호","bus":"1507"},{"seq":2,"driver":"권경율","bus":"1508"},{"seq":3,"driver":"박영기","bus":"1608"},{"seq":4,"driver":"유재웅","bus":"1609"},{"seq":5,"driver":"천승준","bus":"1610"},{"seq":6,"driver":"이재천","bus":"1622"}]}}},"driverAlerts":{"prepLead":60,"tangLeads":[10,5,1],"armed":{}},"cloud":{"deviceId":"","lastSyncAt":"","lastSyncResult":"","schemaVersion":"2.6"}};
@@ -643,12 +677,101 @@ function updateArmBox(date,a){
     driverArmText.innerHTML=`${fmtDate(date)} 스케줄 확인 후 저장하세요.<br>저장하면 출근준비 60분 전, 각 탕 10/5/1분 전에 자동 안내합니다.`;
   }
 }
+
+let deferredInstallPrompt=null;
+
+async function registerBus70ServiceWorker(){
+  if(!('serviceWorker' in navigator))throw new Error('Service Worker 미지원 브라우저');
+  return await navigator.serviceWorker.register('./sw.js',{scope:'./'});
+}
+function setPwaStatus(text,type=''){
+  const el=document.getElementById('pwaStatus');if(!el)return;
+  el.textContent=text;el.className='pwa-status'+(type?' '+type:'');
+}
+async function checkPwaStatus(){
+  let parts=[];
+  parts.push(window.isSecureContext?'HTTPS/보안환경 ✅':'HTTPS 아님 ❌');
+  parts.push('serviceWorker' in navigator?'Service Worker 지원 ✅':'Service Worker 미지원 ❌');
+  parts.push('Notification' in window?`알림 API ✅ (${Notification.permission})`:'알림 API 미지원 ❌');
+  try{
+    const reg=await registerBus70ServiceWorker();
+    parts.push(reg.active||reg.waiting||reg.installing?'SW 등록 ✅':'SW 등록 대기');
+    setPwaStatus(parts.join(' · '),'ok');
+  }catch(e){
+    parts.push('SW 등록 실패: '+e.message);
+    setPwaStatus(parts.join(' · '),'bad');
+  }
+}
+async function enablePwaNotifications(){
+  try{
+    await registerBus70ServiceWorker();
+    const ok=await requestNotificationPermission();
+    setPwaStatus(ok?'✅ 모바일 알림 사용 준비 완료':'⚠ 알림 권한 필요',ok?'ok':'warn');
+  }catch(e){setPwaStatus('❌ '+e.message,'bad')}
+}
+async function sendPwaTestNotification(){
+  try{
+    await registerBus70ServiceWorker();
+    if(Notification.permission!=='granted'){
+      const ok=await requestNotificationPermission();
+      if(!ok)return;
+    }
+    const reg=await navigator.serviceWorker.ready;
+    await reg.showNotification('BUS70 알림 테스트',{
+      body:'박철완 기사님, BUS70 모바일 알림이 정상 작동합니다.',
+      icon:'./icon-192.png',badge:'./icon-192.png',
+      vibrate:[200,100,200],tag:'bus70-test',
+      data:{url:'./'}
+    });
+    setPwaStatus('✅ 테스트 알림을 보냈습니다. 휴대폰 알림창을 확인하세요.','ok');
+  }catch(e){setPwaStatus('❌ 테스트 알림 실패: '+e.message,'bad')}
+}
+async function installPwa(){
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    const choice=await deferredInstallPrompt.userChoice;
+    setPwaStatus(choice.outcome==='accepted'?'✅ BUS70 설치를 시작했습니다.':'설치를 취소했습니다.',choice.outcome==='accepted'?'ok':'warn');
+    deferredInstallPrompt=null;
+    installBanner.style.display='none';
+    return;
+  }
+  setPwaStatus('설치 버튼이 나타나지 않으면 브라우저 메뉴에서 "홈 화면에 추가" 또는 "앱 설치"를 선택하세요.','warn');
+}
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredInstallPrompt=e;
+  if(document.getElementById('installBanner'))installBanner.style.display='block';
+});
+window.addEventListener('appinstalled',()=>{
+  deferredInstallPrompt=null;
+  if(document.getElementById('installBanner'))installBanner.style.display='none';
+  setPwaStatus('✅ BUS70이 홈 화면에 설치되었습니다.','ok');
+});
+
 async function requestNotificationPermission(){
-  if(!('Notification' in window)){alert('이 브라우저는 시스템 알림을 지원하지 않습니다.');return false}
-  if(Notification.permission==='granted'){alert('알림 권한이 이미 허용되어 있습니다.');return true}
-  let p=await Notification.requestPermission();
-  alert(p==='granted'?'알림 권한을 허용했습니다.':'알림 권한이 허용되지 않았습니다.');
-  return p==='granted';
+  if(!window.isSecureContext){
+    alert('알림은 HTTPS 주소에서만 사용할 수 있습니다. GitHub Pages 주소로 접속하세요.');
+    return false;
+  }
+  if(!('Notification' in window)){
+    alert('이 브라우저는 웹 알림을 지원하지 않습니다.');
+    return false;
+  }
+  await registerBus70ServiceWorker();
+  if(Notification.permission==='granted'){
+    return true;
+  }
+  if(Notification.permission==='denied'){
+    alert('알림이 차단되어 있습니다. 휴대폰 브라우저의 사이트 설정에서 BUS70 알림을 허용한 뒤 다시 시도하세요.');
+    return false;
+  }
+  const p=await Notification.requestPermission();
+  if(p==='granted'){
+    await sendPwaTestNotification();
+    return true;
+  }
+  alert('알림 권한이 허용되지 않았습니다.');
+  return false;
 }
 async function saveDriverScheduleForAlerts(){
   if(!currentDriver)return;
@@ -659,11 +782,29 @@ async function saveDriverScheduleForAlerts(){
   s.driverAlerts.armed[k]={date,driver:currentDriver.name,shift:a.sch.shift,seq:a.it.seq,bus:a.it.bus,savedAt:new Date().toISOString(),notified:{}};
   saveState(s);
   await requestNotificationPermission();
-  updateArmBox(date,a);startGlobalDriverAlertMonitor();
+  updateArmBox(date,a);registerBus70ServiceWorker().then(()=>{console.log('BUS70 SW registered')}).catch(e=>console.warn('SW registration failed',e));
+startGlobalDriverAlertMonitor();
   speak(`${currentDriver.name} 기사님. ${fmtDate(date)} ${a.sch.shift}조 ${a.it.seq}순차 운행 스케줄을 저장했습니다. 운행 1시간 전부터 자동 안내를 시작합니다.`);
 }
-function notifyDriver(title,body,tag){
-  try{if('Notification' in window&&Notification.permission==='granted')new Notification(title,{body,tag});}catch(e){}
+async function notifyDriver(title,body,tag){
+  try{
+    if('serviceWorker' in navigator){
+      const reg=await navigator.serviceWorker.ready;
+      if(Notification.permission==='granted'){
+        await reg.showNotification(title,{
+          body,
+          tag,
+          icon:'./icon-192.png',
+          badge:'./icon-192.png',
+          vibrate:[200,100,200],
+          requireInteraction:false,
+          data:{url:'./'}
+        });
+        return true;
+      }
+    }
+  }catch(e){console.warn('SW notification failed',e)}
+  return false;
 }
 function primaryTangStarts(sch,it){
   let table=sch.isHoliday?HOLIDAY:WEEKDAY,tangs=table[it.seq]||[];
