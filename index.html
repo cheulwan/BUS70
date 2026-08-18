@@ -346,22 +346,33 @@
 </div>
 
 <script>
-  // 시간표 정보
+  // 📌 1 & 2번 문제 해결: 평일 및 주말 시간표 1~5탕 정확한 시간 데이터 매핑
   const timeTableData = {
     weekday: [
-      { turn: 1, text: "05:20", origin: "송내발" }, { turn: 2, text: "05:40", origin: "송내발" },
-      { turn: 3, text: "04:50", origin: "고강발" }, { turn: 4, text: "05:05", origin: "고강발" },
-      { turn: 5, text: "05:20", origin: "고강발" }, { turn: 6, text: "05:36", origin: "고강발" },
-      { turn: 7, text: "05:52", origin: "고강발" }, { turn: 8, text: "06:08", origin: "고강발" },
-      { turn: 9, text: "06:25", origin: "고강발" }, { turn: 10, text: "06:45", origin: "고강발" },
-      { turn: 11, text: "07:05", origin: "고강발" }
+      { turn: 1, origin: "송내발", times: ["05:20", "07:25", "11:20", "15:00", "19:00"] },
+      { turn: 2, origin: "송내발", times: ["05:40", "07:45", "11:40", "15:21", "19:22"] },
+      { turn: 3, origin: "고강발", times: ["04:50", "08:05", "12:00", "15:42", "19:44"] },
+      { turn: 4, origin: "고강발", times: ["05:05", "08:25", "12:20", "16:04", "20:06"] },
+      { turn: 5, origin: "고강발", times: ["05:20", "08:50", "12:40", "16:26", "20:28"] },
+      { turn: 6, origin: "고강발", times: ["05:36", "09:15", "13:00", "16:48", "20:50"] },
+      { turn: 7, origin: "고강발", times: ["05:52", "09:40", "13:20", "17:10", "21:15"] },
+      { turn: 8, origin: "고강발", times: ["06:08", "10:00", "13:40", "17:32", "21:40"] },
+      { turn: 9, origin: "고강발", times: ["06:25", "10:20", "14:00", "17:54", "22:05"] },
+      { turn: 10, origin: "고강발", times: ["06:45", "10:40", "14:20", "18:16", "22:30"] },
+      { turn: 11, origin: "고강발", times: ["07:05", "11:00", "14:40", "18:38", "22:50"] }
     ],
     holiday: [
-      { turn: 1, text: "05:20", origin: "송내발" }, { turn: 2, text: "05:40", origin: "송내발" },
-      { turn: 3, text: "04:50", origin: "고강발" }, { turn: 4, text: "05:15", origin: "고강발" },
-      { turn: 5, text: "05:40", origin: "고강발" }, { turn: 6, text: "06:05", origin: "고강발" },
-      { turn: 7, text: "06:30", origin: "고강발" }, { turn: 8, text: "06:55", origin: "고강발" },
-      { turn: 9, text: "운휴", origin: "-" }, { turn: 10, text: "운휴", origin: "-" }, { turn: 11, text: "운휴", origin: "-" }
+      { turn: 1, origin: "송내발", times: ["05:20", "07:20", "11:20", "15:20", "19:20"] },
+      { turn: 2, origin: "송내발", times: ["05:40", "07:50", "11:50", "15:50", "19:50"] },
+      { turn: 3, origin: "고강발", times: ["04:50", "08:20", "12:20", "16:20", "20:20"] },
+      { turn: 4, origin: "고강발", times: ["05:15", "08:50", "12:50", "16:50", "20:50"] },
+      { turn: 5, origin: "고강발", times: ["05:40", "09:20", "13:20", "17:20", "21:20"] },
+      { turn: 6, origin: "고강발", times: ["06:05", "09:50", "13:50", "17:50", "21:50"] },
+      { turn: 7, origin: "고강발", times: ["06:30", "10:20", "14:20", "18:20", "22:20"] },
+      { turn: 8, origin: "고강발", times: ["06:55", "10:50", "14:50", "18:50", "22:50"] },
+      { turn: 9, origin: "-", times: ["운휴", "운휴", "운휴", "운휴", "운휴"] },
+      { turn: 10, origin: "-", times: ["운휴", "운휴", "운휴", "운휴", "운휴"] },
+      { turn: 11, origin: "-", times: ["운휴", "운휴", "운휴", "운휴", "운휴"] }
     ]
   };
 
@@ -383,7 +394,6 @@
     loadLastDriverProfile();
   };
 
-  // 날짜 변환 함수: 2026-08-17 -> 2026년 8월 17일(월)
   function formatDateWithDay(dateStr) {
     if (!dateStr) return '';
     const parts = dateStr.split('-');
@@ -541,7 +551,7 @@
 
     for(let i = 1; i <= 11; i++) {
       const timeObj = currentTimes.find(t => t.turn === i);
-      const ft = timeObj ? timeObj.text : "미정";
+      const ft = timeObj ? timeObj.times[0] : "미정";
       const origin = timeObj ? timeObj.origin : "-";
       const isOffTurn = isHoliday && i >= 9;
 
@@ -557,7 +567,7 @@
       if(isOffTurn) {
         tbody.innerHTML += `
           <tr style="background:#1e293b; color:#64748b;">
-            <td><b>${i}순차</b><br><span style="font-size:0.65rem; color:#94a3b8;">${ft}</span></td>
+            <td><b>${i}순차</b><br><span style="font-size:0.65rem; color:#94a3b8;">운휴</span></td>
             <td colspan="3" style="text-align:center; color:#ef4444; font-weight:bold;">[휴일 운휴 순차]</td>
           </tr>`;
       } else {
@@ -687,24 +697,43 @@
     
     localStorage.setItem(`70_history_${date}_${shift}`, JSON.stringify(payload));
     localStorage.setItem('70_final_schedule', JSON.stringify(payload));
+    
+    // 오토필 기능을 위한 가장 최근 배차 데이터 저장
+    localStorage.setItem(`70_schedule_${shift}_last`, JSON.stringify(schedule));
 
     updateBoardDisplay();
     if(showAlert) alert(`[${formatDateWithDay(date)} ${shift}조] 배차 확정 저장 완료!`);
   }
 
+  // 📌 4번 문제 해결: 오디오 권한 강제 획득 및 브라우저 정책 우회
   function loginDriverAndStartVoice() {
     const drvName = document.getElementById('drvLoginName').value.trim();
     const empNo = document.getElementById('drvEmpNo').value.trim();
     const busNo = document.getElementById('drvBusNo').value.trim();
 
     if(!drvName) { alert("기사명을 입력하세요."); return; }
-
     localStorage.setItem('70_last_driver_profile', JSON.stringify({ name: drvName, empNo, busNo }));
 
-    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    speakTTS(`${drvName} 기사님, 실시간 관제 시스템에 접속되었습니다.`);
+    // 오디오 컨텍스트 사용자 제스처 안에서 강제 활성화 (iOS/모바일 크롬 대응)
+    if(!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if(audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
 
-    loadDriverSchedule(drvName, busNo);
+    // SpeechSynthesis 권한 강제 활성화를 위한 무음 재생
+    if('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      let unlockMsg = new SpeechSynthesisUtterance(' '); // 빈 문자열로 권한 획득
+      unlockMsg.volume = 0;
+      window.speechSynthesis.speak(unlockMsg);
+    }
+
+    setTimeout(() => {
+      speakTTS(`${drvName} 기사님, 실시간 관제 시스템에 접속되었습니다. 안전 운행 하십시오.`);
+      loadDriverSchedule(drvName, busNo);
+    }, 300);
   }
 
   function loadDriverSchedule(drvName, busNo) {
@@ -730,7 +759,7 @@
     card.style.display = 'block';
     const currentTimes = data.isHoliday ? timeTableData.holiday : timeTableData.weekday;
     const timeObj = currentTimes.find(t => t.turn === myDispatch.turn);
-    const firstTimeStr = timeObj ? timeObj.text : "05:20";
+    const firstTimeStr = timeObj ? timeObj.times[0] : "05:20";
     const origin = timeObj ? timeObj.origin : "출발지";
 
     document.getElementById('drvScheduleTitle').innerText = `${drvName} 기사님 (${data.shift}조)`;
@@ -738,23 +767,25 @@
     document.getElementById('drvScheduleSubText').innerText = `차량: 경기71아 ${myDispatch.bus || busNo}호 | 첫탕 출발: ${firstTimeStr}`;
 
     myActiveTangSchedules = [];
-    let [h, m] = firstTimeStr.split(':').map(Number);
-    let baseMin = h * 60 + m;
-
     container.innerHTML = '';
 
+    // 실제 시간표 데이터 매핑
     for(let tang = 1; tang <= 5; tang++) {
-      let tangMin = baseMin + (tang - 1) * 130;
-      let tangH = Math.floor(tangMin / 60) % 24;
-      let tangM = tangMin % 60;
-      let timeStr = `${String(tangH).padStart(2,'0')}:${String(tangM).padStart(2,'0')}`;
+      let timeStr = timeObj.times[tang - 1];
+      if(!timeStr || timeStr === "운휴") continue;
+
+      let [h, m] = timeStr.split(':').map(Number);
+      let tangMin = h * 60 + m;
 
       myActiveTangSchedules.push({ tang, timeStr, min: tangMin, alerted5m: false, alerted1h: false });
+
+      // 1, 3, 5탕은 고강발 또는 송내발 원위치 / 2, 4탕은 반대편
+      let currOrigin = (tang % 2 !== 0) ? origin : (origin === "송내발" ? "고강발" : "송내발");
 
       container.innerHTML += `
         <div class="tang-card" id="tang_card_${tang}">
           <div>
-            <div class="tang-title">${tang}탕 출발 (${tang === 1 ? origin : '종점/회차'})</div>
+            <div class="tang-title">${tang}탕 발차 (${currOrigin})</div>
             <div style="font-size:0.72rem; color:#cbd5e1;">출발 5분 전 음성 알림</div>
           </div>
           <div style="text-align:right;">
@@ -780,13 +811,13 @@
         if(item.tang === 1 && !item.alerted1h && diff <= 60 && diff > 50) {
           item.alerted1h = true;
           playBeepSound();
-          speakTTS(`1시간 후 1탕 출발 시간입니다. 출근 및 운행 준비 바랍니다.`);
+          speakTTS(`1시간 후 1탕 첫 출발 시간입니다. 출근 및 운행 준비 바랍니다.`);
         }
 
         if(!item.alerted5m && diff <= 5 && diff >= 0) {
           item.alerted5m = true;
           playBeepSound();
-          speakTTS(`주의. ${item.tang}탕 출발 5분 전입니다. 승차하세요.`);
+          speakTTS(`주의. ${item.tang}탕 출발 5분 전입니다. 탑승하여 주십시오.`);
           
           const statusEl = document.getElementById(`tang_status_${item.tang}`);
           if(statusEl) { statusEl.className = "tang-status active"; statusEl.innerText = "출발 임박"; }
@@ -815,7 +846,9 @@
       window.speechSynthesis.cancel();
       const msg = new SpeechSynthesisUtterance(text);
       msg.lang = 'ko-KR';
-      window.speechSynthesis.speak(msg);
+      msg.rate = 1.0;
+      msg.volume = 1.0;
+      setTimeout(() => { window.speechSynthesis.speak(msg); }, 100);
     }
   }
 
@@ -936,7 +969,7 @@
 
       data.schedule.forEach(s => {
         const timeObj = currentTimes.find(t => t.turn === s.turn);
-        const ft = timeObj ? timeObj.text : "미정";
+        const ft = timeObj ? timeObj.times[0] : "미정";
         const origin = timeObj ? timeObj.origin : "";
 
         html += `
@@ -958,23 +991,31 @@
     window.print();
   }
 
+  // 📌 3번 문제 해결: 카카오톡 등 인앱 브라우저 다운로드 막힘 우회 (팝업창에서 꾹 눌러 저장)
   function shareAsPNGImage() {
     const target = document.getElementById('captureBoard');
-    const fileName = getFormattedFileName();
-
-    html2canvas(target, { backgroundColor: '#1b3a2b', scale: 3 }).then(canvas => {
-      canvas.toBlob(blob => {
-        if (!blob) return;
-        const file = new File([blob], `${fileName}.png`, { type: 'image/png' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          navigator.share({ files: [file], title: '70번 현장 배차판', text: `${fileName} 배차표입니다.` });
-        } else {
-          const link = document.createElement('a');
-          link.download = `${fileName}.png`;
-          link.href = URL.createObjectURL(blob);
-          link.click();
-        }
-      }, 'image/png');
+    
+    html2canvas(target, { backgroundColor: '#1b3a2b', scale: 2 }).then(canvas => {
+      const imgData = canvas.toDataURL('image/png');
+      
+      let modal = document.getElementById('imageResultModal');
+      if(!modal) {
+        modal = document.createElement('div');
+        modal.id = 'imageResultModal';
+        modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:15px; box-sizing:border-box;';
+        document.body.appendChild(modal);
+      }
+      modal.innerHTML = `
+        <div style="background:#fff; padding:15px; border-radius:10px; max-width:100%; max-height:90%; overflow:auto; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+          <p style="color:#0f172a; font-weight:900; margin-bottom:12px; font-size:16px;">👇 아래 이미지를 길게 눌러서 [이미지 저장] 하세요</p>
+          <img src="${imgData}" style="width:100%; height:auto; border:2px solid #cbd5e1; border-radius:6px; user-select:all; -webkit-touch-callout:default;" />
+          <p style="color:#64748b; font-size:12px; margin-top:10px; line-height:1.4;">(카카오톡 등에서는 보안상 자동 다운로드가 차단되므로,<br>위 이미지를 1초 이상 꾹 누르시면 폰에 저장하실 수 있습니다.)</p>
+          <button onclick="document.getElementById('imageResultModal').style.display='none'" style="margin-top:15px; padding:12px 30px; background:#ef4444; color:#fff; border:none; border-radius:6px; font-size:16px; font-weight:bold; cursor:pointer;">닫기</button>
+        </div>
+      `;
+      modal.style.display = 'flex';
+    }).catch(err => {
+      alert("이미지 생성 중 오류가 발생했습니다: " + err.message);
     });
   }
 
@@ -1049,18 +1090,15 @@
   }
 
   function saveMasterSettings() {
-    // 문자열을 배열로 변환하고 양 끝 공백 제거 후 빈 문자열 필터링
     let dArr = document.getElementById('driverListInput').value.split(',').map(s => s.trim()).filter(Boolean);
     let bArr = document.getElementById('busListInput').value.split(',').map(s => s.trim()).filter(Boolean);
 
-    // 기사 명단 및 차량 목록을 한글/알파벳 등 로케일에 맞춰 오름차순 정렬
     dArr.sort((a, b) => a.localeCompare(b, 'ko-KR', { sensitivity: 'base' }));
     bArr.sort((a, b) => a.localeCompare(b, 'ko-KR', { numeric: true, sensitivity: 'base' }));
 
     localStorage.setItem('70_drivers', JSON.stringify(dArr));
     localStorage.setItem('70_buses', JSON.stringify(bArr));
 
-    // 정렬된 결과로 입력 창(textarea) 업데이트
     document.getElementById('driverListInput').value = dArr.join(', ');
     document.getElementById('busListInput').value = bArr.join(', ');
 
