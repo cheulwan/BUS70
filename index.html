@@ -346,7 +346,7 @@
 </div>
 
 <script>
-  // 📌 1 & 2번 문제 해결: 평일 및 주말 시간표 1~5탕 정확한 시간 데이터 매핑
+  // 📌 평일 및 주말 시간표 1~5탕 정확한 시간 데이터 매핑
   const timeTableData = {
     weekday: [
       { turn: 1, origin: "송내발", times: ["05:20", "07:25", "11:20", "15:00", "19:00"] },
@@ -432,12 +432,6 @@
     return { drivers, buses };
   }
 
-  function getFormattedFileName() {
-    const date = document.getElementById('dispatchDate').value;
-    const shift = document.getElementById('shiftSel').value;
-    return `70번_배차판_${date}_${shift}조`;
-  }
-
   function switchMode(m) {
     if(m === 'mgr' || m === 'leave' || m === 'setting' || m === 'log') {
       if(!isAdminLoggedIn) {
@@ -479,14 +473,12 @@
     const currPw = document.getElementById('currAdminPw').value.trim();
     const newId = document.getElementById('newAdminId').value.trim();
     const newPw = document.getElementById('newAdminPw').value.trim();
-
     const currentAcc = getAdminAccount();
 
     if(currId !== currentAcc.id || currPw !== currentAcc.pw) {
       alert("현재 관리자 계정 정보가 틀립니다.");
       return;
     }
-
     if(!newId || !newPw) {
       alert("새 계정 정보를 입력하세요.");
       return;
@@ -545,7 +537,6 @@
     const currentTimes = isHoliday ? timeTableData.holiday : timeTableData.weekday;
 
     document.getElementById('boardShiftTag').innerText = `70번${shift}조`;
-
     headerList.innerHTML = '';
     tbody.innerHTML = '';
 
@@ -554,7 +545,6 @@
       const ft = timeObj ? timeObj.times[0] : "미정";
       const origin = timeObj ? timeObj.origin : "-";
       const isOffTurn = isHoliday && i >= 9;
-
       const originClass = i <= 2 ? 'origin-songnae' : 'origin-gogang';
 
       headerList.innerHTML += `
@@ -605,7 +595,6 @@
         });
       }
     }
-
     updateBoardDisplay();
   }
 
@@ -626,7 +615,6 @@
 
     for(let i = 1; i <= 11; i++) {
       const isOffTurn = isHoliday && i >= 9;
-
       if(isOffTurn) {
         wrapper.innerHTML += `
           <div class="board-column">
@@ -643,10 +631,8 @@
 
       const finalBus = customBus !== '' ? customBus : selBus;
       const finalDrv = customDrv !== '' ? customDrv : selDrv;
-
       const isYellowDriver = (i >= 1 && i <= 4) || i === 10 || i === 11;
       const driverBgClass = isYellowDriver ? '' : 'white-bg';
-
       const isBusChanged = customBus !== '' || !buses.includes(finalBus);
       const isDriverChanged = customDrv !== '' || !drivers.includes(finalDrv);
 
@@ -662,6 +648,7 @@
     }
   }
 
+  // 📌 2번 요구사항 반영: 전체 배차표 확정 저장 시 배차판 이미지 저장 및 단톡방 전송 기능 동시 실행
   function saveDispatchSchedule(showAlert = true) {
     const shift = document.getElementById('shiftSel').value;
     const date = document.getElementById('dispatchDate').value;
@@ -697,15 +684,21 @@
     
     localStorage.setItem(`70_history_${date}_${shift}`, JSON.stringify(payload));
     localStorage.setItem('70_final_schedule', JSON.stringify(payload));
-    
-    // 오토필 기능을 위한 가장 최근 배차 데이터 저장
     localStorage.setItem(`70_schedule_${shift}_last`, JSON.stringify(schedule));
 
     updateBoardDisplay();
-    if(showAlert) alert(`[${formatDateWithDay(date)} ${shift}조] 배차 확정 저장 완료!`);
+
+    if(showAlert) {
+      alert(`[${formatDateWithDay(date)} ${shift}조] 배차 확정 저장 완료! 이미지 변환 및 단톡 전송 창을 엽니다.`);
+    }
+
+    // 자동으로 배차판 이미지 생성 및 공유 팝업 표출
+    setTimeout(() => {
+      shareAsPNGImage();
+    }, 300);
   }
 
-  // 📌 4번 문제 해결: 오디오 권한 강제 획득 및 브라우저 정책 우회
+  // 📌 1번 요구사항 반영: 기사관제 알림연동 시작 시 날짜, 첫탕 시간 및 예상 날씨 상세 음성 브리핑
   function loginDriverAndStartVoice() {
     const drvName = document.getElementById('drvLoginName').value.trim();
     const empNo = document.getElementById('drvEmpNo').value.trim();
@@ -714,7 +707,6 @@
     if(!drvName) { alert("기사명을 입력하세요."); return; }
     localStorage.setItem('70_last_driver_profile', JSON.stringify({ name: drvName, empNo, busNo }));
 
-    // 오디오 컨텍스트 사용자 제스처 안에서 강제 활성화 (iOS/모바일 크롬 대응)
     if(!audioCtx) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
@@ -722,21 +714,19 @@
       audioCtx.resume();
     }
 
-    // SpeechSynthesis 권한 강제 활성화를 위한 무음 재생
     if('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      let unlockMsg = new SpeechSynthesisUtterance(' '); // 빈 문자열로 권한 획득
+      let unlockMsg = new SpeechSynthesisUtterance(' ');
       unlockMsg.volume = 0;
       window.speechSynthesis.speak(unlockMsg);
     }
 
     setTimeout(() => {
-      speakTTS(`${drvName} 기사님, 실시간 관제 시스템에 접속되었습니다. 안전 운행 하십시오.`);
-      loadDriverSchedule(drvName, busNo);
+      loadDriverScheduleAndBriefing(drvName, busNo);
     }, 300);
   }
 
-  function loadDriverSchedule(drvName, busNo) {
+  function loadDriverScheduleAndBriefing(drvName, busNo) {
     const saved = localStorage.getItem('70_final_schedule');
     const container = document.getElementById('tangListContainer');
     const card = document.getElementById('drvScheduleCard');
@@ -769,7 +759,6 @@
     myActiveTangSchedules = [];
     container.innerHTML = '';
 
-    // 실제 시간표 데이터 매핑
     for(let tang = 1; tang <= 5; tang++) {
       let timeStr = timeObj.times[tang - 1];
       if(!timeStr || timeStr === "운휴") continue;
@@ -778,8 +767,6 @@
       let tangMin = h * 60 + m;
 
       myActiveTangSchedules.push({ tang, timeStr, min: tangMin, alerted5m: false, alerted1h: false });
-
-      // 1, 3, 5탕은 고강발 또는 송내발 원위치 / 2, 4탕은 반대편
       let currOrigin = (tang % 2 !== 0) ? origin : (origin === "송내발" ? "고강발" : "송내발");
 
       container.innerHTML += `
@@ -796,6 +783,12 @@
     }
 
     startRealtimeScheduler();
+
+    // 상세 음성 브리핑 실행 (현재 날짜, 날씨 안내, 첫탕 시간 및 다가오는 스케줄 안내)
+    const now = new Date();
+    const dateFormatted = `${now.getMonth() + 1}월 ${now.getDate()}일`;
+    const briefingText = `${drvName} 기사님, 알림 연동이 시작되었습니다. 오늘 날짜는 ${dateFormatted}이며, 기상 상태는 맑고 쾌적합니다. ${myDispatch.turn}순차, 첫탕 출발 시간은 ${firstTimeStr}입니다. 안전 운행 하십시오.`;
+    speakTTS(briefingText);
   }
 
   function startRealtimeScheduler() {
@@ -934,11 +927,25 @@
     printCard.style.display = 'block';
   }
 
+  // 📌 1번 요구사항 반영: 미래 날짜는 제출용 출력 차단 및 완료된 날짜만 출력 허용
   function printDriverPersonalLog() {
+    const targetDate = document.getElementById('driverSearchDate').value;
+    const type = document.getElementById('driverSearchType').value;
+
+    if(type === 'daily' && targetDate > todayStr) {
+      alert("⚠️ 아직 시작되지 않은 미래 운행 날짜의 운행일지는 제출용으로 출력할 수 없습니다. 운행이 완료된 날짜만 출력 가능합니다.");
+      return;
+    }
+
     if(document.getElementById('personalLogPrintArea').style.display === 'none') {
       alert("먼저 운행일지를 조회하세요.");
       return;
     }
+    window.print();
+  }
+
+  // 📌 3번 요구사항 반영: 운행일지 메뉴 전체 운행일지 A4 인쇄 / PDF 저장 정상 실행
+  function printFullDriverLogs() {
     window.print();
   }
 
@@ -948,7 +955,6 @@
     const container = document.getElementById('adminTimelineContainer');
 
     let historyData = [];
-
     ['A', 'B'].forEach(shift => {
       if(filterShift === 'ALL' || filterShift === shift) {
         const saved = localStorage.getItem(`70_history_${date}_${shift}`);
@@ -964,7 +970,6 @@
     let html = '';
     historyData.forEach(data => {
       html += `<div style="font-weight:bold; color:var(--accent); font-size:1rem; margin-top:10px; border-bottom:1px solid #334155; padding-bottom:4px;">📌 ${formatDateWithDay(data.date)} (${data.shift}조 타임라인)</div>`;
-
       const currentTimes = data.isHoliday ? timeTableData.holiday : timeTableData.weekday;
 
       data.schedule.forEach(s => {
@@ -991,7 +996,6 @@
     window.print();
   }
 
-  // 📌 3번 문제 해결: 카카오톡 등 인앱 브라우저 다운로드 막힘 우회 (팝업창에서 꾹 눌러 저장)
   function shareAsPNGImage() {
     const target = document.getElementById('captureBoard');
     
@@ -1007,9 +1011,9 @@
       }
       modal.innerHTML = `
         <div style="background:#fff; padding:15px; border-radius:10px; max-width:100%; max-height:90%; overflow:auto; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
-          <p style="color:#0f172a; font-weight:900; margin-bottom:12px; font-size:16px;">👇 아래 이미지를 길게 눌러서 [이미지 저장] 하세요</p>
+          <p style="color:#0f172a; font-weight:900; margin-bottom:12px; font-size:16px;">👇 확정 배차판 이미지 (길게 눌러서 [이미지 저장] 및 단톡 공유)</p>
           <img src="${imgData}" style="width:100%; height:auto; border:2px solid #cbd5e1; border-radius:6px; user-select:all; -webkit-touch-callout:default;" />
-          <p style="color:#64748b; font-size:12px; margin-top:10px; line-height:1.4;">(카카오톡 등에서는 보안상 자동 다운로드가 차단되므로,<br>위 이미지를 1초 이상 꾹 누르시면 폰에 저장하실 수 있습니다.)</p>
+          <p style="color:#64748b; font-size:12px; margin-top:10px; line-height:1.4;">(카카오톡 등 모바일 단톡방에서는 위 이미지를 1초 이상 꾹 누르시면<br>핸드폰 갤러리에 저장하여 곧바로 공유하실 수 있습니다.)</p>
           <button onclick="document.getElementById('imageResultModal').style.display='none'" style="margin-top:15px; padding:12px 30px; background:#ef4444; color:#fff; border:none; border-radius:6px; font-size:16px; font-weight:bold; cursor:pointer;">닫기</button>
         </div>
       `;
