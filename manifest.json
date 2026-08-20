@@ -1,7 +1,7 @@
 {
-  "name": "소신여객 70번 운행관리 V2.8",
+  "name": "소신여객 70번 운행관리 V2.9",
   "short_name": "BUS70",
-  "description": "BUS70 + 백그라운드 Web Push",
+  "description": "BUS70 PWA + Firebase 원격 Push",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

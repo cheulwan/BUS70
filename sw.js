@@ -1,12 +1,17 @@
 importScripts('./firebase-config.js');
 importScripts('https://www.gstatic.com/firebasejs/12.2.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/12.2.1/firebase-messaging-compat.js');
-const CACHE_NAME='bus70-v28-cache-1',APP_SHELL=['./','./index.html','./manifest.json','./firebase-config.js','./icon-192.png','./icon-512.png'];
-if(self.BUS70_FIREBASE_CONFIG&&self.BUS70_FIREBASE_CONFIG.apiKey&&!String(self.BUS70_FIREBASE_CONFIG.apiKey).includes('여기에')){
+const CACHE_NAME='bus70-v29-cache-1';
+const APP_SHELL=['./','./index.html','./manifest.json','./firebase-config.js','./icon-192.png','./icon-512.png'];
+if(self.BUS70_FIREBASE_CONFIG&&self.BUS70_FIREBASE_CONFIG.apiKey){
   firebase.initializeApp(self.BUS70_FIREBASE_CONFIG);
-  firebase.messaging().onBackgroundMessage(p=>{
-    const n=p.notification||{},d=p.data||{};
-    self.registration.showNotification(n.title||d.title||'BUS70 운행 알림',{body:n.body||d.body||'운행 알림',icon:'./icon-192.png',badge:'./icon-192.png',vibrate:[250,120,250],tag:d.tag||'bus70-fcm',data:{url:d.url||'./'}});
+  firebase.messaging().onBackgroundMessage(payload=>{
+    const n=payload.notification||{},d=payload.data||{};
+    self.registration.showNotification(n.title||d.title||'BUS70 운행 알림',{
+      body:n.body||d.body||'운행 알림이 도착했습니다.',
+      icon:'./icon-192.png',badge:'./icon-192.png',vibrate:[250,120,250],
+      tag:d.tag||'bus70-fcm',data:{url:d.url||'./'}
+    });
   });
 }
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(APP_SHELL)).then(()=>self.skipWaiting())));
