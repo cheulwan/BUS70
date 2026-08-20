@@ -1,7 +1,7 @@
 {
-  "name": "소신여객 70번 운행관리",
+  "name": "소신여객 70번 운행관리 V2.8",
   "short_name": "BUS70",
-  "description": "소신여객 70번 기사·배차·운행 관리",
+  "description": "BUS70 + 백그라운드 Web Push",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

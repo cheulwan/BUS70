@@ -1,65 +1,15 @@
-const CACHE_NAME='bus70-v27-cache-1';
-const APP_SHELL=[
-  './',
-  './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
-];
-
-self.addEventListener('install',event=>{
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_SHELL)).then(()=>self.skipWaiting())
-  );
-});
-
-self.addEventListener('activate',event=>{
-  event.waitUntil(
-    caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k))))
-      .then(()=>self.clients.claim())
-  );
-});
-
-self.addEventListener('fetch',event=>{
-  const req=event.request;
-  if(req.method!=='GET')return;
-  event.respondWith(
-    fetch(req).then(res=>{
-      const copy=res.clone();
-      caches.open(CACHE_NAME).then(cache=>cache.put(req,copy)).catch(()=>{});
-      return res;
-    }).catch(()=>caches.match(req).then(r=>r||caches.match('./index.html')))
-  );
-});
-
-self.addEventListener('notificationclick',event=>{
-  event.notification.close();
-  const target=(event.notification.data&&event.notification.data.url)||'./';
-  event.waitUntil(
-    clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{
-      for(const c of list){
-        if('focus' in c){
-          c.navigate(target);
-          return c.focus();
-        }
-      }
-      if(clients.openWindow)return clients.openWindow(target);
-    })
-  );
-});
-
-// 향후 Web Push 서버를 붙일 때 그대로 사용할 수 있는 수신부
-self.addEventListener('push',event=>{
-  let data={};
-  try{data=event.data?event.data.json():{}}catch(e){data={body:event.data?event.data.text():''}}
-  const title=data.title||'BUS70 운행 알림';
-  const options={
-    body:data.body||'운행 알림이 도착했습니다.',
-    icon:'./icon-192.png',
-    badge:'./icon-192.png',
-    vibrate:[200,100,200],
-    tag:data.tag||'bus70-push',
-    data:{url:data.url||'./'}
-  };
-  event.waitUntil(self.registration.showNotification(title,options));
-});
+importScripts('./firebase-config.js');
+importScripts('https://www.gstatic.com/firebasejs/12.2.1/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/12.2.1/firebase-messaging-compat.js');
+const CACHE_NAME='bus70-v28-cache-1',APP_SHELL=['./','./index.html','./manifest.json','./firebase-config.js','./icon-192.png','./icon-512.png'];
+if(self.BUS70_FIREBASE_CONFIG&&self.BUS70_FIREBASE_CONFIG.apiKey&&!String(self.BUS70_FIREBASE_CONFIG.apiKey).includes('여기에')){
+  firebase.initializeApp(self.BUS70_FIREBASE_CONFIG);
+  firebase.messaging().onBackgroundMessage(p=>{
+    const n=p.notification||{},d=p.data||{};
+    self.registration.showNotification(n.title||d.title||'BUS70 운행 알림',{body:n.body||d.body||'운행 알림',icon:'./icon-192.png',badge:'./icon-192.png',vibrate:[250,120,250],tag:d.tag||'bus70-fcm',data:{url:d.url||'./'}});
+  });
+}
+self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(APP_SHELL)).then(()=>self.skipWaiting())));
+self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CACHE_NAME).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
+self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(r=>{const x=r.clone();caches.open(CACHE_NAME).then(c=>c.put(e.request,x)).catch(()=>{});return r}).catch(()=>caches.match(e.request).then(r=>r||caches.match('./index.html'))))});
+self.addEventListener('notificationclick',e=>{e.notification.close();const t=(e.notification.data&&e.notification.data.url)||'./';e.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(l=>{for(const c of l){if('focus'in c){c.navigate(t);return c.focus()}}if(clients.openWindow)return clients.openWindow(t)}))});
