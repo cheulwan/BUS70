@@ -1,0 +1,26 @@
+{
+  "name": "소신여객 70번 운행관리 V2.9",
+  "short_name": "BUS70",
+  "description": "BUS70 PWA + Firebase 원격 Push",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07131f",
+  "theme_color": "#07131f",
+  "lang": "ko-KR",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

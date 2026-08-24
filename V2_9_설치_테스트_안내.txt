@@ -1,0 +1,14 @@
+BUS70 V2.9 테스트
+1. GitHub BUS70 루트에 index.html, sw.js, manifest.json, firebase-config.js, 아이콘 업로드
+2. Apps Script Code.gs를 Code_BUS70_v2_9.gs로 교체하고 새 버전 배포
+3. Apps Script 프로젝트 설정 > 스크립트 속성:
+   FIREBASE_PROJECT_ID = bus70-a2aaa
+   FIREBASE_CLIENT_EMAIL = 서비스계정 JSON의 client_email
+   FIREBASE_PRIVATE_KEY = 서비스계정 JSON의 private_key 전체
+4. 박철완 / 626023 로그인
+5. 개발 현황 > ① Firebase 확인
+6. ② 내 휴대폰 등록
+7. Google Sheet에 PUSH_TOKENS 시트와 626023 행이 생기는지 확인
+8. BUS70을 백그라운드로 보내고 ③ 서버 Push 시험
+9. 알림이 오면 원격 Push 1인 테스트 성공
+주의: private_key는 GitHub에 올리지 말 것.
